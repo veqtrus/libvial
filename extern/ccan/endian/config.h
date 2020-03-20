@@ -1,0 +1,3 @@
+#ifndef HAVE_LITTLE_ENDIAN
+#define HAVE_LITTLE_ENDIAN 1
+#endif
