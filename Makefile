@@ -11,16 +11,25 @@ CFLAGS = -std=c11 -D_POSIX_C_SOURCE=200112L $(INCLUDES) $(WARNINGS)
 SOURCES = $(strip $(call rwildcard,src/,*.c) $(call rwildcard,extern/ccan/,*.c))
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
-.PHONY: libvial.a clean
+TEST_SOURCES = $(strip $(wildcard test/*.c))
+TEST_OBJECTS = $(patsubst %.c,out/%,$(TEST_SOURCES))
 
-all: libvial.a
+.PHONY: all test clean
+
+all: libvial.a test
 
 libvial.a: $(OBJECTS)
 	@echo Archiving...
 	ar rcs $@ $^
 
 clean:
-	rm -f $(OBJECTS)
+	rm -f $(OBJECTS) $(TEST_OBJECTS)
+
+test: $(TEST_OBJECTS)
+
+out/test/%: test/%.c libvial.a
+	@echo Compiling $<
+	@$(CC) $< -o $@ $(CFLAGS) -lm -L. -lvial
 
 %.o: %.c
 	@echo Compiling $<

@@ -50,3 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# IDEs
+*.kdev4
+.kdev4/
+
+# Outputs
+out/test/*
