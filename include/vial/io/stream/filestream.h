@@ -6,18 +6,18 @@ See accompanying file LICENSE or copy at
 https://www.boost.org/LICENSE_1_0.txt
 */
 
-#ifndef VIAL_IO_STATSTREAM_H
-#define VIAL_IO_STATSTREAM_H
+#ifndef VIAL_IO_FILESTREAM_H
+#define VIAL_IO_FILESTREAM_H
 
-#include <stddef.h>
+#include <stdio.h>
 
-#include <vial/io/stream.h>
+#include <vial/io/stream/stream.h>
 
-struct vStatStream {
+struct vFileStream {
 	struct vStream stream;
-	size_t size, position;
+	FILE *file;
 };
 
-error_t vStatStream_init(struct vStatStream *self);
+error_t vFileStream_init(struct vFileStream *self, FILE *file);
 
 #endif

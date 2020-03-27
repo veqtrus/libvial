@@ -11,7 +11,7 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <ccan/crypto/sha256/sha256.h>
 
-#include <vial/io/stream.h>
+#include <vial/io/stream/stream.h>
 
 /* SHA-256 */
 struct vHashStream {

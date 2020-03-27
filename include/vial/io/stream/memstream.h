@@ -12,7 +12,7 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <vial/io/stream.h>
+#include <vial/io/stream/stream.h>
 
 struct vMemStream {
 	struct vStream stream;

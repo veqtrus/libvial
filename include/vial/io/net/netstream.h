@@ -11,7 +11,7 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stdint.h>
 
-#include <vial/io/stream.h>
+#include <vial/io/stream/stream.h>
 #include "socket.h"
 
 struct vNetStream {
