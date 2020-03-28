@@ -2,7 +2,7 @@
 Copyright (c) 2019-2020 Pavlos Georgiou
 
 Distributed under the Boost Software License, Version 1.0.
-See accompanying file LICENSE or copy at
+See accompanying file LICENSE_1_0.txt or copy at
 https://www.boost.org/LICENSE_1_0.txt
 */
 
@@ -27,6 +27,8 @@ struct vString {
 };
 
 void vString_init(struct vString *self, const char *s);
+
+void vString_init_copy(struct vString *self, const struct vString *s);
 
 static inline const char *vString_cstr(const struct vString *self)
 {

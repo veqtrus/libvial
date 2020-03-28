@@ -37,6 +37,13 @@ void vString_init(struct vString *self, const char *s)
 	}
 }
 
+void vString_init_copy(struct vString *self, const struct vString *s)
+{
+	self->length = 0;
+	self->str.static_buf[0] = '\0';
+	vString_append(self, s);
+}
+
 void vString_clear(struct vString *self)
 {
 	if (self->length >= VSTRING_STATIC_SIZE)
