@@ -56,4 +56,5 @@ dkms.conf
 .kdev4/
 
 # Outputs
-out/test/*
+test/*
+!test/*.c
