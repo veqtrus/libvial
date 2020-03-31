@@ -13,9 +13,26 @@ OBJECTS = $(SOURCES:%.c=%.o)
 TEST_SOURCES = $(wildcard test/*.c)
 TEST_OBJECTS = $(TEST_SOURCES:%.c=%)
 
-.PHONY: all test clean
+ifeq ($(PREFIX),)
+	PREFIX := /usr/local
+endif
+
+.PHONY: all test install uninstall clean
 
 all: libvial.a test
+
+install: libvial.a
+	install -d $(DESTDIR)$(PREFIX)/lib/
+	install -m 644 libvial.a $(DESTDIR)$(PREFIX)/lib/
+	cp -a --remove-destination include/vial/ $(DESTDIR)$(PREFIX)/include/
+	chown 644 -R $(DESTDIR)$(PREFIX)/include/vial/
+
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/lib/libvial.a
+	rm -rf $(DESTDIR)$(PREFIX)/include/vial/
+
+clean:
+	rm -f $(OBJECTS) $(TEST_OBJECTS)
 
 libvial.a: $(OBJECTS)
 	@echo Archiving...
@@ -24,9 +41,6 @@ libvial.a: $(OBJECTS)
 %.o: %.c
 	@echo Compiling $<
 	@$(CC) -o $@ -c $< $(CFLAGS)
-
-clean:
-	rm -f $(OBJECTS) $(TEST_OBJECTS)
 
 test: $(TEST_OBJECTS)
 
