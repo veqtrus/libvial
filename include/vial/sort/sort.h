@@ -6,15 +6,9 @@ See accompanying file LICENSE_1_0.txt or copy at
 https://www.boost.org/LICENSE_1_0.txt
 */
 
-#ifndef VIAL_UTIME_H
-#define VIAL_UTIME_H
+#ifndef VIAL_SORT_H
+#define VIAL_SORT_H
 
-#include <stdint.h>
-
-uint64_t vial_utime(void);
-
-uint64_t vial_mtime(void);
-
-void vial_msleep(unsigned long ms);
+typedef int (*vial_comp_f)(const void *, const void *, void *);
 
 #endif

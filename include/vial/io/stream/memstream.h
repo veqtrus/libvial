@@ -14,18 +14,18 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/io/stream/stream.h>
 
-struct vMemStream {
-	struct vStream stream;
+struct vial_memstream {
+	struct vial_stream stream;
 	char *buf;
 	size_t allocated, size, position;
 	bool resizeable;
 };
 
-error_t vMemStream_init_buf(struct vMemStream *self, void *buf, size_t size);
+vial_error_t vial_memstream_init_buf(struct vial_memstream *self, void *buf, size_t size);
 
-error_t vMemStream_init(struct vMemStream *self, size_t size);
+vial_error_t vial_memstream_init(struct vial_memstream *self, size_t size);
 
-static inline error_t vMemStream_copyto(struct vMemStream *self, struct vStream *dst)
+static inline vial_error_t vial_memstream_copyto(struct vial_memstream *self, struct vial_stream *dst)
 {
 	return dst->vtable->write(dst, self->buf, self->size);
 }

@@ -11,18 +11,18 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <stdlib.h>
 
 struct sharedptr {
-	sharedptr_dispose_f dispose;
+	vial_sharedptr_dispose_f dispose;
 	volatile int count;
 };
 
 static void dispose_nop(void *ptr) { }
 
-void *sharedptr_malloc(size_t size)
+void *vial_sharedptr_malloc(size_t size)
 {
-	return sharedptr_make(size, dispose_nop);
+	return vial_sharedptr_make(size, dispose_nop);
 }
 
-void *sharedptr_make(size_t size, sharedptr_dispose_f dispose)
+void *vial_sharedptr_make(size_t size, vial_sharedptr_dispose_f dispose)
 {
 	struct sharedptr *sp = malloc(size + sizeof(*sp));
 	sp->dispose = dispose;
@@ -30,13 +30,13 @@ void *sharedptr_make(size_t size, sharedptr_dispose_f dispose)
 	return sp + 1;
 }
 
-void sharedptr_take(void *ptr)
+void vial_sharedptr_take(void *ptr)
 {
 	struct sharedptr *sp = ptr;
 	(sp - 1)->count++;
 }
 
-void sharedptr_leave(void *ptr)
+void vial_sharedptr_leave(void *ptr)
 {
 	struct sharedptr *sp = ptr;
 	sp--;

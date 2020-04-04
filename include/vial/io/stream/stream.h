@@ -13,86 +13,86 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/error.h>
 
-#define VSTREAM_SUPPORTS_READ 1
-#define VSTREAM_SUPPORTS_WRITE (1 << 1)
-#define VSTREAM_SUPPORTS_SEEK (1 << 2)
-#define VSTREAM_SUPPORTS_POSITION (1 << 3)
-#define VSTREAM_SUPPORTS_AVAILABLE (1 << 4)
-#define VSTREAM_SUPPORTS_ALL ((1 << 5) - 1)
+#define VIAL_STREAM_CAN_READ 1
+#define VIAL_STREAM_CAN_WRITE (1 << 1)
+#define VIAL_STREAM_CAN_SEEK (1 << 2)
+#define VIAL_STREAM_CAN_POSITION (1 << 3)
+#define VIAL_STREAM_CAN_AVAILABLE (1 << 4)
+#define VIAL_STREAM_CAN_ALL ((1 << 5) - 1)
 
-extern const char *const VSTREAM_IO_ERROR;
-extern const char *const VSTREAM_DISPOSED;
-extern const char *const VSTREAM_NOT_SUPPORTED;
+extern const char *const VIAL_STREAM_IO_ERROR;
+extern const char *const VIAL_STREAM_DISPOSED;
+extern const char *const VIAL_STREAM_NOT_SUPPORTED;
 
-enum vStreamSeek {
-	vStreamSeek_SET,
-	vStreamSeek_CUR,
-	vStreamSeek_END
+enum vial_stream_seek {
+	VIAL_STREAM_SEEK_SET,
+	VIAL_STREAM_SEEK_CUR,
+	VIAL_STREAM_SEEK_END
 };
 
-struct vStream;
+struct vial_stream;
 
-struct vStream_vtable {
-	void (*dispose)(struct vStream *self);
-	error_t (*capabilities)(struct vStream *self, int *capabilities);
-	error_t (*close)(struct vStream *self);
-	error_t (*flush)(struct vStream *self);
-	error_t (*seek)(struct vStream *self, long offset, enum vStreamSeek origin);
-	error_t (*position)(struct vStream *self, size_t *position);
-	error_t (*available)(struct vStream *self, size_t *available);
-	error_t (*read)(struct vStream *self, void *buf, size_t size);
-	error_t (*write)(struct vStream *self, const void *buf, size_t size);
+struct vial_stream_vtable {
+	void (*dispose)(struct vial_stream *self);
+	vial_error_t (*capabilities)(struct vial_stream *self, int *capabilities);
+	vial_error_t (*close)(struct vial_stream *self);
+	vial_error_t (*flush)(struct vial_stream *self);
+	vial_error_t (*seek)(struct vial_stream *self, long offset, enum vial_stream_seek origin);
+	vial_error_t (*position)(struct vial_stream *self, size_t *position);
+	vial_error_t (*available)(struct vial_stream *self, size_t *available);
+	vial_error_t (*read)(struct vial_stream *self, void *buf, size_t size);
+	vial_error_t (*write)(struct vial_stream *self, const void *buf, size_t size);
 };
 
-struct vStream {
-	const struct vStream_vtable *vtable;
+struct vial_stream {
+	const struct vial_stream_vtable *vtable;
 };
 
-static inline void vStream_dispose(struct vStream *self)
+static inline void vial_stream_dispose(struct vial_stream *self)
 {
 	self->vtable->dispose(self);
 }
 
-static inline error_t vStream_capabilities(struct vStream *self, int *capabilities)
+static inline vial_error_t vial_stream_capabilities(struct vial_stream *self, int *capabilities)
 {
 	return self->vtable->capabilities(self, capabilities);
 }
 
-static inline error_t vStream_close(struct vStream *self)
+static inline vial_error_t vial_stream_close(struct vial_stream *self)
 {
 	return self->vtable->close(self);
 }
 
-static inline error_t vStream_flush(struct vStream *self)
+static inline vial_error_t vial_stream_flush(struct vial_stream *self)
 {
 	return self->vtable->flush(self);
 }
 
-static inline error_t vStream_seek(struct vStream *self, long offset, enum vStreamSeek origin)
+static inline vial_error_t vial_stream_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
 {
 	return self->vtable->seek(self, offset, origin);
 }
 
-static inline error_t vStream_position(struct vStream *self, size_t *position)
+static inline vial_error_t vial_stream_position(struct vial_stream *self, size_t *position)
 {
 	return self->vtable->position(self, position);
 }
 
-static inline error_t vStream_available(struct vStream *self, size_t *available)
+static inline vial_error_t vial_stream_available(struct vial_stream *self, size_t *available)
 {
 	return self->vtable->available(self, available);
 }
 
-static inline error_t vStream_read(struct vStream *self, void *buf, size_t size)
+static inline vial_error_t vial_stream_read(struct vial_stream *self, void *buf, size_t size)
 {
 	return self->vtable->read(self, buf, size);
 }
 
-static inline error_t vStream_write(struct vStream *self, const void *buf, size_t size)
+static inline vial_error_t vial_stream_write(struct vial_stream *self, const void *buf, size_t size)
 {
 	return self->vtable->write(self, buf, size);
 }
 
-error_t vStream_print(struct vStream *self, const char *str);
+vial_error_t vial_stream_print(struct vial_stream *self, const char *str);
 
 #endif

@@ -15,14 +15,15 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef isort
+#ifndef vial_isort
 
-#define isort(ptr, len, tmp) \
-	for (int isort_i = 1; isort_i < (len); ++isort_i) { \
-		(tmp) = (ptr)[isort_i]; \
-		for (int isort_j = isort_i - 1; isort_j >= 0 && (ptr)[isort_j] > (tmp); --isort_j) \
-			(ptr)[isort_j + 1] = (ptr)[isort_j]; \
-		(ptr)[isort_j] = (tmp); \
-	}
+#define vial_isort(ptr, len, tmp) do { \
+		for (int vial_isort_i = 1; vial_isort_i < (len); ++vial_isort_i) { \
+			(tmp) = (ptr)[vial_isort_i]; \
+			for (int vial_isort_j = vial_isort_i - 1; vial_isort_j >= 0 && (ptr)[vial_isort_j] > (tmp); --vial_isort_j) \
+				(ptr)[vial_isort_j + 1] = (ptr)[vial_isort_j]; \
+			(ptr)[vial_isort_j] = (tmp); \
+		} \
+	} while (0)
 
 #endif

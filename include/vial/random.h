@@ -11,14 +11,14 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stdint.h>
 
-struct vRandom {
+struct vial_random {
 	uint64_t s;
 };
 
-void vRandom_seed(struct vRandom *self, uint64_t seed);
+void vial_random_seed(struct vial_random *self, uint64_t seed);
 
-double vRandom_unit(struct vRandom *self);
+double vial_random_unit(struct vial_random *self);
 
-uint32_t vRandom_int(struct vRandom *self, uint32_t range);
+uint32_t vial_random_int(struct vial_random *self, uint32_t range);
 
 #endif

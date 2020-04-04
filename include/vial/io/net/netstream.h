@@ -14,12 +14,12 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <vial/io/stream/stream.h>
 #include "socket.h"
 
-struct vNetStream {
-	struct vStream stream;
+struct vial_netstream {
+	struct vial_stream stream;
 	uint64_t read_timeout, write_timeout;
-	struct vSocket socket;
+	struct vial_socket socket;
 };
 
-error_t vNetStream_init(struct vNetStream *self, struct vSocket socket);
+vial_error_t vial_netstream_init(struct vial_netstream *self, struct vial_socket socket);
 
 #endif

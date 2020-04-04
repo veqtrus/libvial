@@ -12,7 +12,7 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #define RAND_XSS_CONST UINT64_C(0x2545F4914F6CDD1D)
 
-static uint64_t xorshift64s(struct vRandom *self)
+static uint64_t xorshift64s(struct vial_random *self)
 {
 	/* The state must be seeded with a nonzero value. */
 	uint64_t x = self->s;
@@ -23,19 +23,19 @@ static uint64_t xorshift64s(struct vRandom *self)
 	return x * RAND_XSS_CONST;
 }
 
-void vRandom_seed(struct vRandom *self, uint64_t seed)
+void vial_random_seed(struct vial_random *self, uint64_t seed)
 {
 	seed ^= RAND_XSS_CONST;
 	self->s = seed ? seed : RAND_XSS_CONST;
 }
 
-double vRandom_unit(struct vRandom *self)
+double vial_random_unit(struct vial_random *self)
 {
 	const double r = xorshift64s(self) >> 8;
 	return r / (UINT64_C(1) << 56);
 }
 
-uint32_t vRandom_int(struct vRandom *self, uint32_t range)
+uint32_t vial_random_int(struct vial_random *self, uint32_t range)
 {
 	return ((xorshift64s(self) >> 32) * range) >> 32;
 }

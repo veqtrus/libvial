@@ -10,11 +10,11 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <string.h>
 
-const char *const VSTREAM_IO_ERROR = "STREAM_IO_ERROR";
-const char *const VSTREAM_DISPOSED = "STREAM_DISPOSED";
-const char *const VSTREAM_NOT_SUPPORTED = "STREAM_NOT_SUPPORTED";
+const char *const VIAL_STREAM_IO_ERROR = "VIAL_STREAM_IO_ERROR";
+const char *const VIAL_STREAM_DISPOSED = "VIAL_STREAM_DISPOSED";
+const char *const VIAL_STREAM_NOT_SUPPORTED = "VIAL_STREAM_NOT_SUPPORTED";
 
-error_t vStream_print(struct vStream *self, const char *str)
+vial_error_t vial_stream_print(struct vial_stream *self, const char *str)
 {
 	return self->vtable->write(self, str, strlen(str));
 }

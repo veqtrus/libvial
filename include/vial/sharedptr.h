@@ -11,14 +11,14 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stddef.h>
 
-typedef void (*sharedptr_dispose_f)(void *);
+typedef void (*vial_sharedptr_dispose_f)(void *);
 
-void *sharedptr_malloc(size_t size);
+void *vial_sharedptr_malloc(size_t size);
 
-void *sharedptr_make(size_t size, sharedptr_dispose_f dispose);
+void *vial_sharedptr_make(size_t size, vial_sharedptr_dispose_f dispose);
 
-void sharedptr_take(void *ptr);
+void vial_sharedptr_take(void *ptr);
 
-void sharedptr_leave(void *ptr);
+void vial_sharedptr_leave(void *ptr);
 
 #endif

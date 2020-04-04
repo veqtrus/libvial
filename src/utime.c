@@ -17,7 +17,7 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <errno.h>
 #endif
 
-uint64_t utime(void)
+uint64_t vial_utime(void)
 {
 #if defined(_WIN32) || defined(_WIN64)
 	union {
@@ -34,12 +34,12 @@ uint64_t utime(void)
 #endif
 }
 
-uint64_t mtime(void)
+uint64_t vial_mtime(void)
 {
-	return utime() / 1000;
+	return vial_utime() / 1000;
 }
 
-void msleep(unsigned long ms)
+void vial_msleep(unsigned long ms)
 {
 #if defined(_WIN32) || defined(_WIN64)
 	Sleep(ms);

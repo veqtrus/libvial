@@ -9,22 +9,22 @@ https://www.boost.org/LICENSE_1_0.txt
 #ifndef VIAL_ERROR_H
 #define VIAL_ERROR_H
 
-typedef struct vError {
+typedef struct vial_error {
 	char *id, *message;
-	struct vError *cause;
+	struct vial_error *cause;
 	const char *file;
 	int line;
-} *error_t;
+} *vial_error_t;
 
-error_t error_make(const char *id, const char *message, error_t cause, const char *file, int line);
+vial_error_t vial_error_make(const char *id, const char *message, vial_error_t cause, const char *file, int line);
 
-void error_free(error_t self);
+void vial_error_free(vial_error_t self);
 
-void error_print(error_t self);
+void vial_error_print(vial_error_t self);
 
-#define error_new(id, message, cause) error_make((id), (message), (cause), __FILE__, __LINE__)
+#define vial_error_new(id, message, cause) vial_error_make((id), (message), (cause), __FILE__, __LINE__)
 
-#define error_rethrow(err) for (error_t error_x = (err); error_x;) \
-	return error_make(error_x->id, error_x->message, error_x, __FILE__, __LINE__)
+#define vial_error_rethrow(err) for (vial_error_t vial_error_x = (err); vial_error_x;) \
+	return vial_error_make(vial_error_x->id, vial_error_x->message, vial_error_x, __FILE__, __LINE__)
 
 #endif

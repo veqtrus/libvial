@@ -13,11 +13,11 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/io/stream/stream.h>
 
-struct vFileStream {
-	struct vStream stream;
+struct vial_filestream {
+	struct vial_stream stream;
 	FILE *file;
 };
 
-error_t vFileStream_init(struct vFileStream *self, FILE *file);
+vial_error_t vial_filestream_init(struct vial_filestream *self, FILE *file);
 
 #endif

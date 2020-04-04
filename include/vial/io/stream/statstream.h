@@ -13,11 +13,11 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/io/stream/stream.h>
 
-struct vStatStream {
-	struct vStream stream;
+struct vial_statstream {
+	struct vial_stream stream;
 	size_t size, position;
 };
 
-error_t vStatStream_init(struct vStatStream *self);
+vial_error_t vial_statstream_init(struct vial_statstream *self);
 
 #endif

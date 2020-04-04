@@ -11,14 +11,14 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stddef.h>
 
-char *string_dup(const char *s);
+char *vial_strdup(const char *s);
 
-#define VSTRING_STATIC_SIZE 16
+#define VIAL_STRING_STATIC_SIZE 16
 
-struct vString {
+struct vial_string {
 	size_t length;
 	union {
-		char static_buf[VSTRING_STATIC_SIZE];
+		char static_buf[VIAL_STRING_STATIC_SIZE];
 		struct {
 			size_t alloc;
 			char *buf;
@@ -26,49 +26,49 @@ struct vString {
 	} str;
 };
 
-void vString_init(struct vString *self, const char *s);
+void vial_string_init(struct vial_string *self, const char *s);
 
-void vString_init_copy(struct vString *self, const struct vString *s);
+void vial_string_init_copy(struct vial_string *self, const struct vial_string *s);
 
-static inline const char *vString_cstr(const struct vString *self)
+static inline const char *vial_string_cstr(const struct vial_string *self)
 {
-	return self->length < VSTRING_STATIC_SIZE ? self->str.static_buf : self->str.dynamic.buf;
+	return self->length < VIAL_STRING_STATIC_SIZE ? self->str.static_buf : self->str.dynamic.buf;
 }
 
-static inline char *vString_cstr_mut(struct vString *self)
+static inline char *vial_string_cstr_mut(struct vial_string *self)
 {
-	return self->length < VSTRING_STATIC_SIZE ? self->str.static_buf : self->str.dynamic.buf;
+	return self->length < VIAL_STRING_STATIC_SIZE ? self->str.static_buf : self->str.dynamic.buf;
 }
 
-static inline char vString_get(const struct vString *self, size_t index)
+static inline char vial_string_get(const struct vial_string *self, size_t index)
 {
-	return index < self->length ? vString_cstr(self)[index] : '\0';
+	return index < self->length ? vial_string_cstr(self)[index] : '\0';
 }
 
-static inline void vString_set(struct vString *self, size_t index, char c)
+static inline void vial_string_set(struct vial_string *self, size_t index, char c)
 {
 	if (index < self->length)
-		vString_cstr_mut(self)[index] = c;
+		vial_string_cstr_mut(self)[index] = c;
 }
 
-void vString_clear(struct vString *self);
+void vial_string_clear(struct vial_string *self);
 
-char vString_pop(struct vString *self);
+char vial_string_pop(struct vial_string *self);
 
-void vString_push(struct vString *self, char c);
+void vial_string_push(struct vial_string *self, char c);
 
-void vString_append(struct vString *self, const struct vString *s);
+void vial_string_append(struct vial_string *self, const struct vial_string *s);
 
-void vString_append_cstr(struct vString *self, const char *s);
+void vial_string_append_cstr(struct vial_string *self, const char *s);
 
-void vString_append_arr(struct vString *self, const char *s, size_t len);
+void vial_string_append_arr(struct vial_string *self, const char *s, size_t len);
 
-void vString_insert(struct vString *self, size_t index, const struct vString *s);
+void vial_string_insert(struct vial_string *self, size_t index, const struct vial_string *s);
 
-void vString_insert_cstr(struct vString *self, size_t index, const char *s);
+void vial_string_insert_cstr(struct vial_string *self, size_t index, const char *s);
 
-void vString_insert_arr(struct vString *self, size_t index, const char *s, size_t len);
+void vial_string_insert_arr(struct vial_string *self, size_t index, const char *s, size_t len);
 
-void vString_erase(struct vString *self, size_t index, size_t count);
+void vial_string_erase(struct vial_string *self, size_t index, size_t count);
 
 #endif

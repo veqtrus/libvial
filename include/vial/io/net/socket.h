@@ -14,12 +14,12 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/error.h>
 
-extern const char *const VSOCKET_ERROR;
+extern const char *const VIAL_SOCKET_ERROR;
 
-enum vSocketAF { vSocketAF_IP4, vSocketAF_IP6 };
+enum vial_socket_af { VIAL_SOCKET_AF_IP4, VIAL_SOCKET_AF_IP6 };
 
-struct vSocketAddr {
-	enum vSocketAF family;
+struct vial_socket_addr {
+	enum vial_socket_af family;
 	uint16_t port;
 	union {
 		uint32_t v4;
@@ -27,51 +27,51 @@ struct vSocketAddr {
 	} addr;
 };
 
-struct vSocket {
+struct vial_socket {
 	union {
 		int fd;
 		char cs[16];
 	} socket;
 };
 
-enum vSocketType { vSocketType_STREAM, vSocketType_DGRAM };
+enum vial_socket_type { VIAL_SOCKET_TYPE_STREAM, VIAL_SOCKET_TYPE_DGRAM };
 
-enum vSocketShutdown { vSocketShutdown_RECV, vSocketShutdown_SEND, vSocketShutdown_BOTH };
+enum vial_socket_shut { VIAL_SOCKET_SHUT_RECV, VIAL_SOCKET_SHUT_SEND, VIAL_SOCKET_SHUT_BOTH };
 
-error_t vSocketAddr_resolve(const char *host, uint16_t port, struct vSocketAddr **addresses, size_t *count);
+vial_error_t vial_socket_addr_resolve(const char *host, uint16_t port, struct vial_socket_addr **addresses, size_t *count);
 
-error_t vSocketAddr_init(struct vSocketAddr *self, const char *addr, uint16_t port);
+vial_error_t vial_socket_addr_init(struct vial_socket_addr *self, const char *addr, uint16_t port);
 
-error_t vSocketAddr_stringify(const struct vSocketAddr *self, char *str);
+vial_error_t vial_socket_addr_stringify(const struct vial_socket_addr *self, char *str);
 
-int vSocket_startup(void);
+int vial_socket_startup(void);
 
-int vSocket_cleanup(void);
+int vial_socket_cleanup(void);
 
-error_t vSocket_init(struct vSocket *self, enum vSocketAF domain, enum vSocketType type);
+vial_error_t vial_socket_init(struct vial_socket *self, enum vial_socket_af domain, enum vial_socket_type type);
 
-error_t vSocket_initconn(struct vSocket *self, const char *host, uint16_t port);
+vial_error_t vial_socket_initconn(struct vial_socket *self, const char *host, uint16_t port);
 
-error_t vSocket_accept(struct vSocket *self, struct vSocket *socket, struct vSocketAddr *address);
+vial_error_t vial_socket_accept(struct vial_socket *self, struct vial_socket *socket, struct vial_socket_addr *address);
 
-error_t vSocket_available(struct vSocket *self, size_t *available);
+vial_error_t vial_socket_available(struct vial_socket *self, size_t *available);
 
-error_t vSocket_bind(struct vSocket *self, struct vSocket *socket, const struct vSocketAddr *address);
+vial_error_t vial_socket_bind(struct vial_socket *self, struct vial_socket *socket, const struct vial_socket_addr *address);
 
-error_t vSocket_close(struct vSocket *self);
+vial_error_t vial_socket_close(struct vial_socket *self);
 
-error_t vSocket_connect(struct vSocket *self, const struct vSocketAddr *address);
+vial_error_t vial_socket_connect(struct vial_socket *self, const struct vial_socket_addr *address);
 
-error_t vSocket_listen(struct vSocket *self, int backlog);
+vial_error_t vial_socket_listen(struct vial_socket *self, int backlog);
 
-error_t vSocket_recv(struct vSocket *self, void *buffer, size_t *length);
+vial_error_t vial_socket_recv(struct vial_socket *self, void *buffer, size_t *length);
 
-error_t vSocket_recvfrom(struct vSocket *self, void *buffer, size_t *length, struct vSocketAddr *address);
+vial_error_t vial_socket_recvfrom(struct vial_socket *self, void *buffer, size_t *length, struct vial_socket_addr *address);
 
-error_t vSocket_send(struct vSocket *self, const void *buffer, size_t *length);
+vial_error_t vial_socket_send(struct vial_socket *self, const void *buffer, size_t *length);
 
-error_t vSocket_sendto(struct vSocket *self, const void *buffer, size_t *length, const struct vSocketAddr *address);
+vial_error_t vial_socket_sendto(struct vial_socket *self, const void *buffer, size_t *length, const struct vial_socket_addr *address);
 
-error_t vSocket_shutdown(struct vSocket *self, enum vSocketShutdown how);
+vial_error_t vial_socket_shutdown(struct vial_socket *self, enum vial_socket_shut how);
 
 #endif

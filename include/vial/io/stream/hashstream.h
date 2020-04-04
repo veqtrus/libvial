@@ -14,15 +14,15 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <vial/io/stream/stream.h>
 
 /* SHA-256 */
-struct vHashStream {
-	struct vStream stream;
+struct vial_hashstream {
+	struct vial_stream stream;
 	struct sha256_ctx hash;
 };
 
-error_t vHashStream_init(struct vHashStream *self);
+vial_error_t vial_hashstream_init(struct vial_hashstream *self);
 
-error_t vHashStream_sha256(struct vHashStream *self, void *buf);
+vial_error_t vial_hashstream_sha256(struct vial_hashstream *self, void *buf);
 
-error_t vHashStream_sha256d(struct vHashStream *self, void *buf);
+vial_error_t vial_hashstream_sha256d(struct vial_hashstream *self, void *buf);
 
 #endif

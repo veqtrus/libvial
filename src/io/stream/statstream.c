@@ -8,29 +8,29 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/io/stream/statstream.h>
 
-#define _self ((struct vStatStream *) self)
+#define _self ((struct vial_statstream *) self)
 
-static void impl_dispose(struct vStream *self) { }
+static void impl_dispose(struct vial_stream *self) { }
 
-static error_t impl_capabilities(struct vStream *self, int *capabilities)
+static vial_error_t impl_capabilities(struct vial_stream *self, int *capabilities)
 {
-	*capabilities = VSTREAM_SUPPORTS_ALL ^ VSTREAM_SUPPORTS_READ;
+	*capabilities = VIAL_STREAM_CAN_ALL ^ VIAL_STREAM_CAN_READ;
 	return NULL;
 }
 
-static error_t impl_nop() { return NULL; }
+static vial_error_t impl_nop() { return NULL; }
 
-static error_t impl_seek(struct vStream *self, long offset, enum vStreamSeek origin)
+static vial_error_t impl_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
 {
 	switch (origin) {
-	case vStreamSeek_SET:
+	case VIAL_STREAM_SEEK_SET:
 		_self->position = offset;
 		break;
-	case vStreamSeek_CUR:
+	case VIAL_STREAM_SEEK_CUR:
 		if (offset < 0) _self->position -= -offset;
 		else _self->position += offset;
 		break;
-	case vStreamSeek_END:
+	case VIAL_STREAM_SEEK_END:
 		_self->position = _self->size;
 		if (offset < 0) _self->position -= -offset;
 		else _self->position += offset;
@@ -39,24 +39,24 @@ static error_t impl_seek(struct vStream *self, long offset, enum vStreamSeek ori
 	return NULL;
 }
 
-static error_t impl_position(struct vStream *self, size_t *position)
+static vial_error_t impl_position(struct vial_stream *self, size_t *position)
 {
 	*position = _self->position;
 	return NULL;
 }
 
-static error_t impl_available(struct vStream *self, size_t *available)
+static vial_error_t impl_available(struct vial_stream *self, size_t *available)
 {
 	*available = _self->size - _self->position;
 	return NULL;
 }
 
-static error_t impl_read(struct vStream *self, void *buf, size_t size)
+static vial_error_t impl_read(struct vial_stream *self, void *buf, size_t size)
 {
-	return error_new(VSTREAM_NOT_SUPPORTED, VSTREAM_NOT_SUPPORTED, NULL);
+	return vial_error_new(VIAL_STREAM_NOT_SUPPORTED, VIAL_STREAM_NOT_SUPPORTED, NULL);
 }
 
-static error_t impl_write(struct vStream *self, const void *buf, size_t size)
+static vial_error_t impl_write(struct vial_stream *self, const void *buf, size_t size)
 {
 	_self->position += size;
 	if (_self->position > _self->size)
@@ -64,7 +64,7 @@ static error_t impl_write(struct vStream *self, const void *buf, size_t size)
 	return NULL;
 }
 
-static const struct vStream_vtable vtable = {
+static const struct vial_stream_vtable vtable = {
 	impl_dispose,
 	impl_capabilities,
 	impl_nop,
@@ -76,7 +76,7 @@ static const struct vStream_vtable vtable = {
 	impl_write
 };
 
-error_t vStatStream_init(struct vStatStream *self)
+vial_error_t vial_statstream_init(struct vial_statstream *self)
 {
 	self->stream.vtable = &vtable;
 	self->size = self->position = 0;

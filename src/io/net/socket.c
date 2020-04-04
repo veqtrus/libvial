@@ -55,7 +55,7 @@ typedef int socket_t;
 #define SHUT_RDWR SD_BOTH
 #endif
 
-const char *const VSOCKET_ERROR = "VSOCKET_ERROR";
+const char *const VIAL_SOCKET_ERROR = "VIAL_SOCKET_ERROR";
 
 #ifdef VIAL_WINSOCK_VERSION
 typedef struct {
@@ -74,14 +74,14 @@ union vsockaddr {
 	sockaddr_in6_t in6;
 };
 
-static error_t get_error(int err, const char *file, int line)
+static vial_error_t get_error(int err, const char *file, int line)
 {
 	char text[32];
 	sprintf(text, "%d", err);
-	return error_make(VSOCKET_ERROR, text, NULL, file, line);
+	return vial_error_make(VIAL_SOCKET_ERROR, text, NULL, file, line);
 }
 
-static socket_t get_socket(const struct vSocket *self)
+static socket_t get_socket(const struct vial_socket *self)
 {
 #ifdef VIAL_WINSOCK_VERSION
 	socket_t socket;
@@ -92,7 +92,7 @@ static socket_t get_socket(const struct vSocket *self)
 #endif
 }
 
-static void set_socket(struct vSocket *self, socket_t socket)
+static void set_socket(struct vial_socket *self, socket_t socket)
 {
 #ifdef VIAL_WINSOCK_VERSION
 	memcpy(self->socket.cs, &socket, sizeof(socket));
@@ -101,33 +101,33 @@ static void set_socket(struct vSocket *self, socket_t socket)
 #endif
 }
 
-static error_t get_sockaddr(const struct vSocketAddr *self, union vsockaddr *addr)
+static vial_error_t get_sockaddr(const struct vial_socket_addr *self, union vsockaddr *addr)
 {
 	memset(addr, 0, sizeof(*addr));
-	if (self->family == vSocketAF_IP4)
+	if (self->family == VIAL_SOCKET_AF_IP4)
 		addr->in.sin_family = AF_INET;
-	else if (self->family == vSocketAF_IP6)
+	else if (self->family == VIAL_SOCKET_AF_IP6)
 		addr->in.sin_family = AF_INET6;
 	else
 		return get_error(EAFNOSUPPORT, __FILE__, __LINE__);
 	addr->in.sin_port = htons(self->port);
-	if (self->family == vSocketAF_IP6)
+	if (self->family == VIAL_SOCKET_AF_IP6)
 		memcpy(&addr->in6.sin6_addr, &self->addr.v6, sizeof(addr->in6.sin6_addr));
 	else
 		memcpy(&addr->in.sin_addr, &self->addr.v4, sizeof(addr->in.sin_addr));
 	return NULL;
 }
 
-static error_t set_sockaddr(struct vSocketAddr *self, const union vsockaddr *addr)
+static vial_error_t set_sockaddr(struct vial_socket_addr *self, const union vsockaddr *addr)
 {
 	if (addr->in.sin_family == AF_INET)
-		self->family = vSocketAF_IP4;
+		self->family = VIAL_SOCKET_AF_IP4;
 	else if (addr->in.sin_family == AF_INET6)
-		self->family = vSocketAF_IP6;
+		self->family = VIAL_SOCKET_AF_IP6;
 	else
 		return get_error(EAFNOSUPPORT, __FILE__, __LINE__);
 	self->port = ntohs(addr->in.sin_port);
-	if (self->family == vSocketAF_IP6)
+	if (self->family == VIAL_SOCKET_AF_IP6)
 		memcpy(&self->addr.v6, &addr->in6.sin6_addr, sizeof(addr->in6.sin6_addr));
 	else
 		memcpy(&self->addr.v4, &addr->in.sin_addr, sizeof(addr->in.sin_addr));
@@ -142,11 +142,11 @@ static size_t get_addrinfo_length(const struct addrinfo *addr)
 	return length;
 }
 
-error_t vSocketAddr_resolve(const char *host, uint16_t port, struct vSocketAddr **addresses, size_t *count)
+vial_error_t vial_socket_addr_resolve(const char *host, uint16_t port, struct vial_socket_addr **addresses, size_t *count)
 {
-	error_t e;
+	vial_error_t e;
 	struct addrinfo *cur_addr_info, *addr_info = NULL;
-	struct vSocketAddr *cur_addr;
+	struct vial_socket_addr *cur_addr;
 	char port_str[8];
 	sprintf(port_str, "%d", (int) port);
 	if (getaddrinfo(host, port_str, NULL, &addr_info))
@@ -164,7 +164,7 @@ error_t vSocketAddr_resolve(const char *host, uint16_t port, struct vSocketAddr 
 			free(*addresses);
 			freeaddrinfo(addr_info);
 			*addresses = NULL;
-			error_rethrow(e);
+			vial_error_rethrow(e);
 		}
 		cur_addr->port = port;
 		cur_addr++;
@@ -173,26 +173,26 @@ error_t vSocketAddr_resolve(const char *host, uint16_t port, struct vSocketAddr 
 	return NULL;
 }
 
-error_t vSocketAddr_init(struct vSocketAddr *self, const char *addr, uint16_t port)
+vial_error_t vial_socket_addr_init(struct vial_socket_addr *self, const char *addr, uint16_t port)
 {
 	memset(self, 0, sizeof(*self));
 	if (inet_pton(AF_INET6, addr, &self->addr.v6) == 1)
-		self->family = vSocketAF_IP4;
+		self->family = VIAL_SOCKET_AF_IP4;
 	else if (inet_pton(AF_INET, addr, &self->addr.v4) == 1)
-		self->family = vSocketAF_IP6;
+		self->family = VIAL_SOCKET_AF_IP6;
 	else
 		return get_error(EINVAL, __FILE__, __LINE__);
 	self->port = port;
 	return NULL;
 }
 
-error_t vSocketAddr_stringify(const struct vSocketAddr *self, char *str)
+vial_error_t vial_socket_addr_stringify(const struct vial_socket_addr *self, char *str)
 {
 	union vsockaddr saddr;
 	char addr_str[64] = "";
 	int port = self->port;
-	error_rethrow(get_sockaddr(self, &saddr));
-	if (self->family == vSocketAF_IP4) {
+	vial_error_rethrow(get_sockaddr(self, &saddr));
+	if (self->family == VIAL_SOCKET_AF_IP4) {
 		if (inet_ntop(saddr.in.sin_family, &saddr.in.sin_addr, addr_str, sizeof(addr_str)) == NULL)
 			return_error;
 		sprintf(str, "%s:%d", addr_str, port);
@@ -204,7 +204,7 @@ error_t vSocketAddr_stringify(const struct vSocketAddr *self, char *str)
 	return NULL;
 }
 
-int vSocket_startup(void)
+int vial_socket_startup(void)
 {
 #ifdef VIAL_WINSOCK_VERSION
 	WSADATA wsa_data;
@@ -214,25 +214,27 @@ int vSocket_startup(void)
 #endif
 }
 
-int vSocket_cleanup(void)
+int vial_socket_cleanup(void)
 {
 #ifdef VIAL_WINSOCK_VERSION
 	return WSACleanup();
+#else
+	return 0;
 #endif
 }
 
-error_t vSocket_init(struct vSocket *self, enum vSocketAF domain, enum vSocketType type)
+vial_error_t vial_socket_init(struct vial_socket *self, enum vial_socket_af domain, enum vial_socket_type type)
 {
 	int idomain, itype;
-	if (domain == vSocketAF_IP4)
+	if (domain == VIAL_SOCKET_AF_IP4)
 		idomain = AF_INET;
-	else if (domain == vSocketAF_IP6)
+	else if (domain == VIAL_SOCKET_AF_IP6)
 		idomain = AF_INET6;
 	else
 		return get_error(EAFNOSUPPORT, __FILE__, __LINE__);
-	if (type == vSocketType_STREAM)
+	if (type == VIAL_SOCKET_TYPE_STREAM)
 		itype = SOCK_STREAM;
-	else if (type == vSocketType_STREAM)
+	else if (type == VIAL_SOCKET_TYPE_STREAM)
 		itype = SOCK_DGRAM;
 	else
 		return get_error(EPROTOTYPE, __FILE__, __LINE__);
@@ -248,30 +250,30 @@ error_t vSocket_init(struct vSocket *self, enum vSocketAF domain, enum vSocketTy
 	return NULL;
 }
 
-error_t vSocket_initconn(struct vSocket *self, const char *host, uint16_t port)
+vial_error_t vial_socket_initconn(struct vial_socket *self, const char *host, uint16_t port)
 {
-	error_t e;
-	struct vSocketAddr *addrs, *addr;
+	vial_error_t e;
+	struct vial_socket_addr *addrs, *addr;
 	size_t addr_len;
-	error_rethrow(vSocketAddr_resolve(host, port, &addrs, &addr_len));
+	vial_error_rethrow(vial_socket_addr_resolve(host, port, &addrs, &addr_len));
 	foreach(addr, addrs, addr_len) {
-		e = vSocket_init(self, addr->family, vSocketType_STREAM);
+		e = vial_socket_init(self, addr->family, VIAL_SOCKET_TYPE_STREAM);
 		if (e) {
-			error_free(e);
+			vial_error_free(e);
 			continue;
 		}
-		e = vSocket_connect(self, addr);
+		e = vial_socket_connect(self, addr);
 		if (e) {
-			error_free(e);
-			vSocket_close(self);
+			vial_error_free(e);
+			vial_socket_close(self);
 			continue;
 		}
 		return NULL;
 	}
-	return error_new(VSOCKET_ERROR, "Not found", NULL);
+	return vial_error_new(VIAL_SOCKET_ERROR, "Not found", NULL);
 }
 
-error_t vSocket_accept(struct vSocket *self, struct vSocket *socket, struct vSocketAddr *address)
+vial_error_t vial_socket_accept(struct vial_socket *self, struct vial_socket *socket, struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
 	size_t size = sizeof(addr);
@@ -285,11 +287,11 @@ error_t vSocket_accept(struct vSocket *self, struct vSocket *socket, struct vSoc
 #endif
 	set_socket(socket, s);
 	if (address)
-		error_rethrow(set_sockaddr(address, &addr));
+		vial_error_rethrow(set_sockaddr(address, &addr));
 	return NULL;
 }
 
-error_t vSocket_available(struct vSocket *self, size_t *available)
+vial_error_t vial_socket_available(struct vial_socket *self, size_t *available)
 {
 #ifdef VIAL_WINSOCK_VERSION
 	u_long len = 0;
@@ -304,10 +306,10 @@ error_t vSocket_available(struct vSocket *self, size_t *available)
 	return NULL;
 }
 
-error_t vSocket_bind(struct vSocket *self, struct vSocket *socket, const struct vSocketAddr *address)
+vial_error_t vial_socket_bind(struct vial_socket *self, struct vial_socket *socket, const struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
-	error_rethrow(get_sockaddr(address, &addr));
+	vial_error_rethrow(get_sockaddr(address, &addr));
 	socket_t s = bind(get_socket(self), (struct sockaddr *) &addr, sizeof(addr));
 #ifdef VIAL_WINSOCK_VERSION
 	if (s == INVALID_SOCKET)
@@ -320,7 +322,7 @@ error_t vSocket_bind(struct vSocket *self, struct vSocket *socket, const struct 
 	return NULL;
 }
 
-error_t vSocket_close(struct vSocket *self)
+vial_error_t vial_socket_close(struct vial_socket *self)
 {
 	int res;
 #ifdef VIAL_WINSOCK_VERSION
@@ -333,23 +335,23 @@ error_t vSocket_close(struct vSocket *self)
 	return NULL;
 }
 
-error_t vSocket_connect(struct vSocket *self, const struct vSocketAddr *address)
+vial_error_t vial_socket_connect(struct vial_socket *self, const struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
-	error_rethrow(get_sockaddr(address, &addr));
+	vial_error_rethrow(get_sockaddr(address, &addr));
 	if (connect(get_socket(self), (struct sockaddr *) &addr, sizeof(addr)))
 		return_error;
 	return NULL;
 }
 
-error_t vSocket_listen(struct vSocket *self, int backlog)
+vial_error_t vial_socket_listen(struct vial_socket *self, int backlog)
 {
 	if (listen(get_socket(self), backlog))
 		return_error;
 	return NULL;
 }
 
-error_t vSocket_recv(struct vSocket *self, void *buffer, size_t *length)
+vial_error_t vial_socket_recv(struct vial_socket *self, void *buffer, size_t *length)
 {
 	int res = recv(get_socket(self), buffer, *length, 0);
 	if (res < 0) {
@@ -360,7 +362,7 @@ error_t vSocket_recv(struct vSocket *self, void *buffer, size_t *length)
 	return NULL;
 }
 
-error_t vSocket_recvfrom(struct vSocket *self, void *buffer, size_t *length, struct vSocketAddr *address)
+vial_error_t vial_socket_recvfrom(struct vial_socket *self, void *buffer, size_t *length, struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
 	size_t size = sizeof(addr);
@@ -371,11 +373,11 @@ error_t vSocket_recvfrom(struct vSocket *self, void *buffer, size_t *length, str
 	}
 	*length = res;
 	if (address)
-		error_rethrow(set_sockaddr(address, &addr));
+		vial_error_rethrow(set_sockaddr(address, &addr));
 	return NULL;
 }
 
-error_t vSocket_send(struct vSocket *self, const void *buffer, size_t *length)
+vial_error_t vial_socket_send(struct vial_socket *self, const void *buffer, size_t *length)
 {
 	int res = send(get_socket(self), buffer, *length, 0);
 	if (res < 0) {
@@ -386,10 +388,10 @@ error_t vSocket_send(struct vSocket *self, const void *buffer, size_t *length)
 	return NULL;
 }
 
-error_t vSocket_sendto(struct vSocket *self, const void *buffer, size_t *length, const struct vSocketAddr *address)
+vial_error_t vial_socket_sendto(struct vial_socket *self, const void *buffer, size_t *length, const struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
-	error_rethrow(get_sockaddr(address, &addr));
+	vial_error_rethrow(get_sockaddr(address, &addr));
 	int res = sendto(get_socket(self), buffer, *length, 0, (struct sockaddr *) &addr, sizeof(addr));
 	if (res < 0) {
 		*length = 0;
@@ -399,14 +401,14 @@ error_t vSocket_sendto(struct vSocket *self, const void *buffer, size_t *length,
 	return NULL;
 }
 
-error_t vSocket_shutdown(struct vSocket *self, enum vSocketShutdown how)
+vial_error_t vial_socket_shutdown(struct vial_socket *self, enum vial_socket_shut how)
 {
 	int ihow;
-	if (how == vSocketShutdown_RECV)
+	if (how == VIAL_SOCKET_SHUT_RECV)
 		ihow = SHUT_RD;
-	else if (how == vSocketShutdown_SEND)
+	else if (how == VIAL_SOCKET_SHUT_SEND)
 		ihow = SHUT_WR;
-	else if (how == vSocketShutdown_BOTH)
+	else if (how == VIAL_SOCKET_SHUT_BOTH)
 		ihow = SHUT_RDWR;
 	else
 		return get_error(EINVAL, __FILE__, __LINE__);

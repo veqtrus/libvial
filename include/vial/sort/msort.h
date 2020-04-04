@@ -11,10 +11,10 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stddef.h>
 
-typedef int (*msort_comp_f)(const void *, const void *, void *);
+#include <vial/sort/sort.h>
 
-void msort_tmp(void *ptr, void *tmp, size_t count, size_t size, msort_comp_f comp, void *context);
+void vial_msort_tmp(void *ptr, void *tmp, size_t count, size_t size, vial_comp_f comp, void *context);
 
-void msort(void *ptr, size_t count, size_t size, msort_comp_f comp, void *context);
+void vial_msort(void *ptr, size_t count, size_t size, vial_comp_f comp, void *context);
 
 #endif

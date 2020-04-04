@@ -12,119 +12,119 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <limits.h>
 #include <stdio.h>
 
-#define _self ((struct vFileStream *) self)
+#define _self ((struct vial_filestream *) self)
 
-static void impl_dispose(struct vStream *self)
+static void impl_dispose(struct vial_stream *self)
 {
 	_self->file = NULL;
 }
 
-static error_t impl_capabilities(struct vStream *self, int *capabilities)
+static vial_error_t impl_capabilities(struct vial_stream *self, int *capabilities)
 {
 	if (_self->file == NULL)
-		return error_new(VSTREAM_DISPOSED, VSTREAM_DISPOSED, NULL);
-	*capabilities = VSTREAM_SUPPORTS_ALL;
+		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
+	*capabilities = VIAL_STREAM_CAN_ALL;
 	return NULL;
 }
 
-static error_t impl_close(struct vStream *self)
+static vial_error_t impl_close(struct vial_stream *self)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
-		return error_new(VSTREAM_DISPOSED, VSTREAM_DISPOSED, NULL);
+		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
 	if (fclose(file))
-		return error_new(VSTREAM_IO_ERROR, VSTREAM_IO_ERROR, NULL);
+		return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 	_self->file = NULL;
 	return NULL;
 }
 
-static error_t impl_flush(struct vStream *self)
+static vial_error_t impl_flush(struct vial_stream *self)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
-		return error_new(VSTREAM_DISPOSED, VSTREAM_DISPOSED, NULL);
+		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
 	if (fflush(file))
-		return error_new(VSTREAM_IO_ERROR, VSTREAM_IO_ERROR, NULL);
+		return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 	return NULL;
 }
 
-static error_t impl_seek(struct vStream *self, long offset, enum vStreamSeek origin)
+static vial_error_t impl_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
 {
 	FILE *file = _self->file;
 	int file_origin;
 	if (file == NULL)
-		return error_new(VSTREAM_DISPOSED, VSTREAM_DISPOSED, NULL);
+		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
 	switch (origin) {
-	case vStreamSeek_SET:
+	case VIAL_STREAM_SEEK_SET:
 		file_origin = SEEK_SET;
 		break;
-	case vStreamSeek_CUR:
+	case VIAL_STREAM_SEEK_CUR:
 		file_origin = SEEK_CUR;
 		break;
-	case vStreamSeek_END:
+	case VIAL_STREAM_SEEK_END:
 		file_origin = SEEK_END;
 		break;
 	}
 	if (fseek(file, offset, file_origin))
-		return error_new(VSTREAM_IO_ERROR, VSTREAM_IO_ERROR, NULL);
+		return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 	return NULL;
 }
 
-static error_t impl_position(struct vStream *self, size_t *position)
+static vial_error_t impl_position(struct vial_stream *self, size_t *position)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
-		return error_new(VSTREAM_DISPOSED, VSTREAM_DISPOSED, NULL);
+		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
 	long res = ftell(file);
 	if (res < 0)
-		return error_new(VSTREAM_IO_ERROR, VSTREAM_IO_ERROR, NULL);
+		return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 	*position = res;
 	return NULL;
 }
 
-static error_t impl_available(struct vStream *self, size_t *available)
+static vial_error_t impl_available(struct vial_stream *self, size_t *available)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
-		return error_new(VSTREAM_DISPOSED, VSTREAM_DISPOSED, NULL);
+		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
 	long cpos = ftell(file);
 	if (cpos < 0)
-		return error_new(VSTREAM_IO_ERROR, VSTREAM_IO_ERROR, NULL);
+		return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 	fseek(file, 0, SEEK_END);
 	long len = ftell(file);
 	if (len < 0)
-		return error_new(VSTREAM_IO_ERROR, VSTREAM_IO_ERROR, NULL);
+		return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 	if (fseek(file, cpos, SEEK_SET))
-		return error_new(VSTREAM_IO_ERROR, VSTREAM_IO_ERROR, NULL);
+		return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 	*available = len - cpos;
 	return NULL;
 }
 
-static error_t impl_read(struct vStream *self, void *buf, size_t size)
+static vial_error_t impl_read(struct vial_stream *self, void *buf, size_t size)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
-		return error_new(VSTREAM_DISPOSED, VSTREAM_DISPOSED, NULL);
+		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
 	if (size == 0)
 		return NULL;
 	if (fread(buf, size, 1, file))
 		return NULL;
-	return error_new(VSTREAM_IO_ERROR, VSTREAM_IO_ERROR, NULL);
+	return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 }
 
-static error_t impl_write(struct vStream *self, const void *buf, size_t size)
+static vial_error_t impl_write(struct vial_stream *self, const void *buf, size_t size)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
-		return error_new(VSTREAM_DISPOSED, VSTREAM_DISPOSED, NULL);
+		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
 	if (size == 0)
 		return NULL;
 	if (fwrite(buf, size, 1, file))
 		return NULL;
-	return error_new(VSTREAM_IO_ERROR, VSTREAM_IO_ERROR, NULL);
+	return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 }
 
-static const struct vStream_vtable vtable = {
+static const struct vial_stream_vtable vtable = {
 	impl_dispose,
 	impl_capabilities,
 	impl_close,
@@ -136,7 +136,7 @@ static const struct vStream_vtable vtable = {
 	impl_write
 };
 
-error_t vFileStream_init(struct vFileStream *self, FILE *file)
+vial_error_t vial_filestream_init(struct vial_filestream *self, FILE *file)
 {
 	self->stream.vtable = &vtable;
 	self->file = file;
