@@ -9,7 +9,6 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <vial/io/stream/hashstream.h>
 
 #include <stddef.h>
-#include <ccan/crypto/sha256/sha256.h>
 
 static void impl_dispose(struct vial_stream *self) { }
 
@@ -27,8 +26,8 @@ static vial_error_t impl_not_supported()
 static vial_error_t impl_write(struct vial_stream *self, const void *buf, size_t size)
 {
 	if (size == 0) return NULL;
-	struct sha256_ctx *hash = &((struct vial_hashstream *) self)->hash;
-	sha256_update(hash, buf, size);
+	struct vial_sha256 *hasher = &((struct vial_hashstream *) self)->hasher;
+	vial_sha256_update(hasher, buf, size);
 	return NULL;
 }
 
@@ -47,27 +46,25 @@ static const struct vial_stream_vtable vtable = {
 vial_error_t vial_hashstream_init(struct vial_hashstream *self)
 {
 	self->stream.vtable = &vtable;
-	sha256_init(&self->hash);
+	vial_sha256_init(&self->hasher);
 	return NULL;
 }
 
 vial_error_t vial_hashstream_sha256(struct vial_hashstream *self, void *buf)
 {
-	struct sha256_ctx *hash = &self->hash;
-	struct sha256 *res = (struct sha256*)buf;
-	sha256_done(hash, res);
-	sha256_init(hash);
+	struct vial_sha256 *hasher = &self->hasher;
+	vial_sha256_done(hasher, buf);
+	vial_sha256_init(hasher);
 	return NULL;
 }
 
 vial_error_t vial_hashstream_sha256d(struct vial_hashstream *self, void *buf)
 {
-	struct sha256_ctx *hash = &self->hash;
-	struct sha256 *res = (struct sha256*)buf;
-	sha256_done(hash, res);
-	sha256_init(hash);
-	sha256_update(hash, res, 32);
-	sha256_done(hash, res);
-	sha256_init(hash);
+	struct vial_sha256 *hasher = &self->hasher;
+	vial_sha256_done(hasher, buf);
+	vial_sha256_init(hasher);
+	vial_sha256_update(hasher, buf, 32);
+	vial_sha256_done(hasher, buf);
+	vial_sha256_init(hasher);
 	return NULL;
 }

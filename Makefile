@@ -4,10 +4,10 @@ WARNINGS := -pedantic -Wcast-align -Wpointer-arith \
 	-Wbad-function-cast -Wmissing-prototypes -Wstrict-aliasing \
 	-Wmissing-declarations -Winline -Wnested-externs -Wcast-qual \
 	-Wshadow -Wwrite-strings -Wno-unused-parameter -Wfloat-equal
-INCLUDES := -Iinclude/ -Iextern/
+INCLUDES := -Iinclude/
 CFLAGS := -std=c11 -D_POSIX_C_SOURCE=200112L $(INCLUDES) $(WARNINGS)
 
-SOURCES = $(strip $(call rwildcard,src/,*.c) $(call rwildcard,extern/ccan/,*.c))
+SOURCES = $(strip $(call rwildcard,src/,*.c))
 OBJECTS = $(SOURCES:%.c=%.o)
 
 TEST_SOURCES = $(wildcard test/*.c)
@@ -15,6 +15,12 @@ TEST_OBJECTS = $(TEST_SOURCES:%.c=%)
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
+endif
+
+ifeq ($(DEBUG),1)
+	CFLAGS += -g
+else
+	CFLAGS += -O2
 endif
 
 .PHONY: all test install uninstall clean

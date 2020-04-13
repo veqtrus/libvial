@@ -9,14 +9,13 @@ https://www.boost.org/LICENSE_1_0.txt
 #ifndef VIAL_IO_HASHSTREAM_H
 #define VIAL_IO_HASHSTREAM_H
 
-#include <ccan/crypto/sha256/sha256.h>
-
 #include <vial/io/stream/stream.h>
+#include <vial/crypto/sha256.h>
 
 /* SHA-256 */
 struct vial_hashstream {
 	struct vial_stream stream;
-	struct sha256_ctx hash;
+	struct vial_sha256 hasher;
 };
 
 vial_error_t vial_hashstream_init(struct vial_hashstream *self);
