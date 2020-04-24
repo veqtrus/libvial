@@ -12,7 +12,7 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/crypto/sha256.h>
 #include <vial/crypto/aes.h>
-#include <vial/base_encoding.h>
+#include <vial/encoding/base_encoding.h>
 #include <vial/utime.h>
 
 static int test_sha256()

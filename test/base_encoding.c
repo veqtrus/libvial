@@ -10,7 +10,7 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <stdlib.h>
 #include <string.h>
 
-#include <vial/base_encoding.h>
+#include <vial/encoding/base_encoding.h>
 
 static int test_base_encoding(const char *original, const char *encoded, int base)
 {

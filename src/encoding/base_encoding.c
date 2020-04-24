@@ -6,7 +6,7 @@ See accompanying file LICENSE_1_0.txt or copy at
 https://www.boost.org/LICENSE_1_0.txt
 */
 
-#include <vial/base_encoding.h>
+#include <vial/encoding/base_encoding.h>
 
 static const char base64_alphabet[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
