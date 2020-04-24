@@ -50,17 +50,13 @@ static const uint8_t rsbox[256] = {
 
 static const uint8_t rcon[11] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36 };
 
-#define NR 10
-
-#define ROT(r, n) (((r) >> (n)) | ((r) << (32 - (n))))
-
-#define GDBL(n) (((n) << 1) ^ (0x1B & -(uint8_t)(((n) >> 7) & 1)))
+#define GDBL(n) (((n) << 1) ^ (0x1B & -(const uint8_t)(((n) >> 7) & 1)))
 
 #define GMUL(arr, row, col, n) ( \
-	(arr[0].bytes[4 * col + row] & -(uint8_t)((n) & 1)) ^ \
-	(arr[1].bytes[4 * col + row] & -(uint8_t)((n >> 1) & 1)) ^ \
-	(arr[2].bytes[4 * col + row] & -(uint8_t)((n >> 2) & 1)) ^ \
-	(arr[3].bytes[4 * col + row] & -(uint8_t)((n >> 3) & 1)) )
+	(arr[0].bytes[4 * col + row] & -(const uint8_t)((n) & 1)) ^ \
+	(arr[1].bytes[4 * col + row] & -(const uint8_t)((n >> 1) & 1)) ^ \
+	(arr[2].bytes[4 * col + row] & -(const uint8_t)((n >> 2) & 1)) ^ \
+	(arr[3].bytes[4 * col + row] & -(const uint8_t)((n >> 3) & 1)) )
 
 #define GDOT(arr, col, a0, a1, a2, a3) ( \
 	GMUL(arr, 0, col, a0) ^ \
@@ -68,42 +64,63 @@ static const uint8_t rcon[11] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40
 	GMUL(arr, 2, col, a2) ^ \
 	GMUL(arr, 3, col, a3) )
 
-static inline void block_xor(union vial_aes_block *restrict dst, const union vial_aes_block *restrict src)
-{
-	dst->words[0] ^= src->words[0];
-	dst->words[1] ^= src->words[1];
-	dst->words[2] ^= src->words[2];
-	dst->words[3] ^= src->words[3];
-}
+#define BXOR(dst, src) do { \
+		(dst).words[0] ^= (src).words[0]; \
+		(dst).words[1] ^= (src).words[1]; \
+		(dst).words[2] ^= (src).words[2]; \
+		(dst).words[3] ^= (src).words[3]; \
+	} while (0)
 
-static void expand_keys(union vial_aes_block *keys)
+#ifdef ASM_INTEL_AES
+int vial_intel_aes_supported(void);
+void vial_intel_aes_encrypt(void *blk, const void *keys, unsigned rounds);
+void vial_intel_aes_decrypt(void *blk, const void *keys, unsigned rounds);
+#endif
+
+static void expand_keys(uint32_t *w, unsigned n, unsigned r)
 {
-	int r;
-	for (r = 1; r <= NR; ++r) {
-		keys[r].bytes[0] = sbox[keys[r - 1].bytes[13]] ^ rcon[r];
-		keys[r].bytes[1] = sbox[keys[r - 1].bytes[14]];
-		keys[r].bytes[2] = sbox[keys[r - 1].bytes[15]];
-		keys[r].bytes[3] = sbox[keys[r - 1].bytes[12]];
-		keys[r].words[0] ^= keys[r - 1].words[0];
-		keys[r].words[1] = keys[r - 1].words[1] ^ keys[r].words[0];
-		keys[r].words[2] = keys[r - 1].words[2] ^ keys[r].words[1];
-		keys[r].words[3] = keys[r - 1].words[3] ^ keys[r].words[2];
+	uint8_t *p;
+	unsigned i;
+	for (i = n; i < 4 * r; ++i) {
+		if (i % n == 0) {
+			p = (uint8_t *) (w + i - 1);
+			p[4] = sbox[p[1]] ^ rcon[i / n];
+			p[5] = sbox[p[2]];
+			p[6] = sbox[p[3]];
+			p[7] = sbox[p[0]];
+			w[i] ^= w[i - n];
+		} else if (n > 6 && i % n == 4) {
+			p = (uint8_t *) (w + i - 1);
+			p[4] = sbox[p[0]];
+			p[5] = sbox[p[1]];
+			p[6] = sbox[p[2]];
+			p[7] = sbox[p[3]];
+			w[i] ^= w[i - n];
+		} else {
+			w[i] = w[i - n] ^ w[i - 1];
+		}
 	}
 }
 
-static void encrypt(union vial_aes_block *restrict blk, const union vial_aes_block *restrict keys)
+static void aes_encrypt(union vial_aes_block *restrict blk, const union vial_aes_block *restrict keys, unsigned rounds)
 {
 	union vial_aes_block tblk[4];
-	int i, j, r;
+	unsigned i, j, r;
+#ifdef ASM_INTEL_AES
+	if (vial_intel_aes_supported()) {
+		vial_intel_aes_encrypt(blk, keys, rounds);
+		return;
+	}
+#endif
 	for (r = 0; ; ++r) {
 		/* AddRoundKey */
-		block_xor(blk, keys + r);
+		BXOR(*blk, keys[r]);
 		/* SubBytes */
 		/* ShiftRows */
 		for (j = 0; j < 4; ++j)
 			for (i = 0; i < 4; ++i)
 				tblk[0].bytes[4 * i + j] = sbox[blk->bytes[4 * ((i + j) & 3) + j]];
-		if (r == NR - 1)
+		if (r == rounds - 1)
 			break;
 		/* MixColumns */
 		for (i = 0; i < AES_BLOCK_SIZE; ++i)
@@ -116,26 +133,32 @@ static void encrypt(union vial_aes_block *restrict blk, const union vial_aes_blo
 		}
 	}
 	/* AddRoundKey */
-	blk->words[0] = tblk[0].words[0] ^ keys[NR].words[0];
-	blk->words[1] = tblk[0].words[1] ^ keys[NR].words[1];
-	blk->words[2] = tblk[0].words[2] ^ keys[NR].words[2];
-	blk->words[3] = tblk[0].words[3] ^ keys[NR].words[3];
+	blk->words[0] = tblk[0].words[0] ^ keys[rounds].words[0];
+	blk->words[1] = tblk[0].words[1] ^ keys[rounds].words[1];
+	blk->words[2] = tblk[0].words[2] ^ keys[rounds].words[2];
+	blk->words[3] = tblk[0].words[3] ^ keys[rounds].words[3];
 }
 
-static void decrypt(union vial_aes_block *restrict blk, const union vial_aes_block *restrict keys)
+static void aes_decrypt(union vial_aes_block *restrict blk, const union vial_aes_block *restrict keys, unsigned rounds)
 {
 	union vial_aes_block tblk[4];
-	int i, j, r;
+	unsigned i, j, r;
+#ifdef ASM_INTEL_AES
+	if (vial_intel_aes_supported()) {
+		vial_intel_aes_decrypt(blk, keys, rounds);
+		return;
+	}
+#endif
 	/* AddRoundKey */
-	block_xor(blk, keys + NR);
-	for (r = NR - 1; ; --r) {
+	BXOR(*blk, keys[rounds]);
+	for (r = rounds - 1; ; --r) {
 		/* ShiftRows */
 		/* SubBytes */
 		for (j = 0; j < 4; ++j)
 			for (i = 0; i < 4; ++i)
 				tblk[0].bytes[4 * i + j] = rsbox[blk->bytes[4 * ((4 + i - j) & 3) + j]];
 		/* AddRoundKey */
-		block_xor(tblk, keys + r);
+		BXOR(tblk[0], keys[r]);
 		if (r == 0)
 			break;
 		/* MixColumns */
@@ -152,13 +175,15 @@ static void decrypt(union vial_aes_block *restrict blk, const union vial_aes_blo
 	*blk = tblk[0];
 }
 
-void vial_aes_init(struct vial_aes *self, enum vial_aes_mode mode, const uint8_t *key, const uint8_t *iv)
+void vial_aes_init(struct vial_aes *self, enum vial_aes_mode mode,
+	unsigned keybits, const uint8_t *key, const uint8_t *iv)
 {
 	self->mode = mode;
-	memcpy(self->keys[0].bytes, key, AES_BLOCK_SIZE);
+	self->rounds = keybits / 32 + 6;
+	memcpy(&self->keys[0], key, keybits / 8);
 	if (iv != NULL)
-		memcpy(self->iv.bytes, iv, AES_BLOCK_SIZE);
-	expand_keys(self->keys);
+		memcpy(&self->iv, iv, AES_BLOCK_SIZE);
+	expand_keys(self->keys[0].words, keybits / 32, self->rounds + 1);
 }
 
 void vial_aes_encrypt(struct vial_aes *self, uint8_t *dst, const uint8_t *src, size_t len)
@@ -168,7 +193,7 @@ void vial_aes_encrypt(struct vial_aes *self, uint8_t *dst, const uint8_t *src, s
 	case VIAL_AES_MODE_ECB:
 		while (len >= AES_BLOCK_SIZE) {
 			memcpy(&blk, src, AES_BLOCK_SIZE);
-			encrypt(&blk, self->keys);
+			aes_encrypt(&blk, self->keys, self->rounds);
 			memcpy(dst, &blk, AES_BLOCK_SIZE);
 			src += AES_BLOCK_SIZE;
 			dst += AES_BLOCK_SIZE;
@@ -178,8 +203,8 @@ void vial_aes_encrypt(struct vial_aes *self, uint8_t *dst, const uint8_t *src, s
 	case VIAL_AES_MODE_CBC:
 		while (len >= AES_BLOCK_SIZE) {
 			memcpy(&blk, src, AES_BLOCK_SIZE);
-			block_xor(&blk, &self->iv);
-			encrypt(&blk, self->keys);
+			BXOR(blk, self->iv);
+			aes_encrypt(&blk, self->keys, self->rounds);
 			self->iv = blk;
 			memcpy(dst, &blk, AES_BLOCK_SIZE);
 			src += AES_BLOCK_SIZE;
@@ -189,9 +214,9 @@ void vial_aes_encrypt(struct vial_aes *self, uint8_t *dst, const uint8_t *src, s
 		break;
 	case VIAL_AES_MODE_CFB:
 		while (len >= AES_BLOCK_SIZE) {
-			encrypt(&self->iv, self->keys);
+			aes_encrypt(&self->iv, self->keys, self->rounds);
 			memcpy(&blk, src, AES_BLOCK_SIZE);
-			block_xor(&self->iv, &blk);
+			BXOR(self->iv, blk);
 			memcpy(dst, &self->iv, AES_BLOCK_SIZE);
 			src += AES_BLOCK_SIZE;
 			dst += AES_BLOCK_SIZE;
@@ -208,7 +233,7 @@ void vial_aes_decrypt(struct vial_aes *self, uint8_t *dst, const uint8_t *src, s
 	case VIAL_AES_MODE_ECB:
 		while (len >= AES_BLOCK_SIZE) {
 			memcpy(&blk, src, AES_BLOCK_SIZE);
-			decrypt(&blk, self->keys);
+			aes_decrypt(&blk, self->keys, self->rounds);
 			memcpy(dst, &blk, AES_BLOCK_SIZE);
 			src += AES_BLOCK_SIZE;
 			dst += AES_BLOCK_SIZE;
@@ -218,8 +243,8 @@ void vial_aes_decrypt(struct vial_aes *self, uint8_t *dst, const uint8_t *src, s
 	case VIAL_AES_MODE_CBC:
 		while (len >= AES_BLOCK_SIZE) {
 			memcpy(&blk, src, AES_BLOCK_SIZE);
-			decrypt(&blk, self->keys);
-			block_xor(&blk, &self->iv);
+			aes_decrypt(&blk, self->keys, self->rounds);
+			BXOR(blk, self->iv);
 			memcpy(&self->iv, src, AES_BLOCK_SIZE);
 			memcpy(dst, &blk, AES_BLOCK_SIZE);
 			src += AES_BLOCK_SIZE;
@@ -229,9 +254,9 @@ void vial_aes_decrypt(struct vial_aes *self, uint8_t *dst, const uint8_t *src, s
 		break;
 	case VIAL_AES_MODE_CFB:
 		while (len >= AES_BLOCK_SIZE) {
-			encrypt(&self->iv, self->keys);
+			aes_encrypt(&self->iv, self->keys, self->rounds);
 			memcpy(&blk, src, AES_BLOCK_SIZE);
-			block_xor(&self->iv, &blk);
+			BXOR(self->iv, blk);
 			memcpy(dst, &self->iv, AES_BLOCK_SIZE);
 			self->iv = blk;
 			src += AES_BLOCK_SIZE;

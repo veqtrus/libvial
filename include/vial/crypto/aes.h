@@ -27,10 +27,12 @@ union vial_aes_block {
 
 struct vial_aes {
 	enum vial_aes_mode mode;
-	union vial_aes_block keys[11], iv;
+	unsigned rounds;
+	union vial_aes_block keys[15], iv;
 };
 
-void vial_aes_init(struct vial_aes *self, enum vial_aes_mode mode, const uint8_t *key, const uint8_t *iv);
+void vial_aes_init(struct vial_aes *self, enum vial_aes_mode mode,
+	unsigned keybits, const uint8_t *key, const uint8_t *iv);
 
 void vial_aes_encrypt(struct vial_aes *self, uint8_t *dst, const uint8_t *src, size_t len);
 

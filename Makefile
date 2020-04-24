@@ -23,6 +23,13 @@ else
 	CFLAGS += -O2
 endif
 
+ifeq ($(ASM_INTEL_AES),1)
+	ASM_SOURCES += src/asm/intel_aes.s
+	CFLAGS += -DASM_INTEL_AES=1
+endif
+
+ASM_OBJECTS = $(ASM_SOURCES:%.s=%.o)
+
 .PHONY: all test install uninstall clean
 
 all: libvial.a test
@@ -38,11 +45,14 @@ uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/include/vial/
 
 clean:
-	rm -f $(OBJECTS) $(TEST_OBJECTS)
+	rm -f $(strip $(call rwildcard,src/,*.o))
 
-libvial.a: $(OBJECTS)
+libvial.a: $(OBJECTS) $(ASM_OBJECTS)
 	@echo Archiving...
 	ar rcs $@ $^
+
+src/asm/%.o: src/asm/%.s
+	$(AS) -o $@ -c $<
 
 %.o: %.c
 	@echo Compiling $<
