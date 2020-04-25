@@ -13,6 +13,8 @@ https://www.boost.org/LICENSE_1_0.txt
 
 char *vial_strdup(const char *s);
 
+int vial_cstr_starts(const char *s, const char *b);
+
 #define VIAL_STRING_STATIC_SIZE 16
 
 struct vial_string {

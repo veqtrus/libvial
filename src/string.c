@@ -20,6 +20,14 @@ char *vial_strdup(const char *s)
 	return res;
 }
 
+int vial_cstr_starts(const char *s, const char *b)
+{
+	for (; *b; ++s, ++b)
+		if (*s != *b)
+			return 0;
+	return 1;
+}
+
 void vial_string_init(struct vial_string *self, const char *s)
 {
 	if (s == NULL) {
