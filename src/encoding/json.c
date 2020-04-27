@@ -12,51 +12,22 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/encoding/json.h>
 
-static void dispose_array(vial_json_array_t array)
+static void dispose_array(vial_json_array array)
 {
 	struct vial_json *item;
 	vial_vector_foreach(item, *array)
-		vial_json_dispose(item);
+		vial_json_leave(item);
 	vial_vector_dispose(*array);
 }
 
-static void dispose_object(vial_json_object_t object)
+static void dispose_object(vial_json_object object)
 {
 	struct vial_json_keyvalue *item;
 	vial_vector_foreach(item, *object) {
-		vial_json_dispose(&item->value);
+		vial_json_leave(&item->value);
 		free(item->key);
 	}
 	vial_vector_dispose(*object);
-}
-
-struct vial_json vial_json_create(enum vial_json_type type)
-{
-	struct vial_json result;
-	result.type = type;
-	switch (type) {
-	case VIAL_JSON_NULL:
-	case VIAL_JSON_FALSE:
-	case VIAL_JSON_TRUE:
-		break;
-	case VIAL_JSON_NUMBER:
-		result.value.as_number = 0.0;
-		break;
-	case VIAL_JSON_STRING:
-		return vial_json_create_str("");
-	case VIAL_JSON_ARRAY:
-		result.value.as_array = vial_sharedptr_make(sizeof(*result.value.as_array), (vial_sharedptr_dispose_f) dispose_array);
-		vial_vector_init(*result.value.as_array);
-		break;
-	case VIAL_JSON_OBJECT:
-		result.value.as_object = vial_sharedptr_make(sizeof(*result.value.as_object), (vial_sharedptr_dispose_f) dispose_object);
-		vial_vector_init(*result.value.as_object);
-		break;
-	default:
-		result.type = VIAL_JSON_INVALID;
-		break;
-	}
-	return result;
 }
 
 struct vial_json vial_json_create_str(const char *value)
@@ -66,6 +37,24 @@ struct vial_json vial_json_create_str(const char *value)
 	result.type = VIAL_JSON_STRING;
 	result.value.as_string = vial_sharedptr_malloc(size);
 	memcpy(result.value.as_string, value, size);
+	return result;
+}
+
+struct vial_json vial_json_create_array(void)
+{
+	struct vial_json result;
+	result.type = VIAL_JSON_ARRAY;
+	result.value.as_array = vial_sharedptr_make(sizeof(*result.value.as_array), (vial_sharedptr_dispose_f) dispose_array);
+	vial_vector_init(*result.value.as_array);
+	return result;
+}
+
+struct vial_json vial_json_create_object(void)
+{
+	struct vial_json result;
+	result.type = VIAL_JSON_OBJECT;
+	result.value.as_object = vial_sharedptr_make(sizeof(*result.value.as_object), (vial_sharedptr_dispose_f) dispose_object);
+	vial_vector_init(*result.value.as_object);
 	return result;
 }
 
@@ -91,7 +80,7 @@ struct vial_json vial_json_at(struct vial_json *self, size_t idx)
 		return vial_vector_at(*self->value.as_array, idx);
 	if (self->type == VIAL_JSON_OBJECT && idx < self->value.as_object->size)
 		return vial_vector_at(*self->value.as_object, idx).value;
-	return vial_json_create(VIAL_JSON_INVALID);
+	return vial_json_create_invalid();
 }
 
 struct vial_json vial_json_get(struct vial_json *self, const char *key)
@@ -101,7 +90,7 @@ struct vial_json vial_json_get(struct vial_json *self, const char *key)
 		vial_vector_foreach(item, *self->value.as_object)
 			if (strcmp(item->key, key) == 0)
 				return item->value;
-	return vial_json_create(VIAL_JSON_INVALID);
+	return vial_json_create_invalid();
 }
 
 const char *vial_json_key(struct vial_json *self, size_t idx)
@@ -127,7 +116,7 @@ static struct vial_json parse_number(const char **p_str)
 	skip_whitespace(&c);
 	ret = sscanf(c, "%lf%n", &value, &count);
 	if (ret < 1 || count < 1)
-		return vial_json_create(VIAL_JSON_INVALID);
+		return vial_json_create_invalid();
 	c += count;
 	skip_whitespace(&c);
 	*p_str = c;
@@ -219,7 +208,7 @@ static struct vial_json parse_value(const char **p_str, int level)
 	case '[':
 		c++;
 		skip_whitespace(&c);
-		value = vial_json_create(VIAL_JSON_ARRAY);
+		value = vial_json_create_array();
 		if (*c == ']') {
 			c++;
 			break;
@@ -238,7 +227,7 @@ static struct vial_json parse_value(const char **p_str, int level)
 	case '{':
 		c++;
 		skip_whitespace(&c);
-		value = vial_json_create(VIAL_JSON_OBJECT);
+		value = vial_json_create_object();
 		if (*c == '}') {
 			c++;
 			break;
@@ -272,7 +261,7 @@ static struct vial_json parse_value(const char **p_str, int level)
 	*p_str = c;
 	return value;
 parse_error:
-	vial_json_dispose(&value);
+	vial_json_leave(&value);
 	value.type = VIAL_JSON_INVALID;
 	return value;
 }

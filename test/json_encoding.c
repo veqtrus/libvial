@@ -22,7 +22,7 @@ int main()
 	for (const char **test = tests; *test; test++) {
 		json = vial_json_decode(*test);
 		encoded = vial_json_encode(&json, "\t");
-		vial_json_dispose(&json);
+		vial_json_leave(&json);
 		json = vial_json_decode(vial_string_cstr(&encoded));
 		vial_string_clear(&encoded);
 		encoded = vial_json_encode(&json, NULL);
