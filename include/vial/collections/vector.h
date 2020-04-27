@@ -14,19 +14,19 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #define vial_vector(T) struct { T *values; size_t size, capacity; }
 
-typedef vial_vector(void) vial_vector_void_t;
+typedef vial_vector(void) vial_vector_of_void;
 
-typedef vial_vector(char) vial_vector_char_t;
-typedef vial_vector(short) vial_vector_short_t;
-typedef vial_vector(int) vial_vector_int_t;
-typedef vial_vector(long) vial_vector_long_t;
+typedef vial_vector(char) vial_vector_of_char;
+typedef vial_vector(short) vial_vector_of_short;
+typedef vial_vector(int) vial_vector_of_int;
+typedef vial_vector(long) vial_vector_of_long;
 
-typedef vial_vector(unsigned char) vial_vector_uchar_t;
-typedef vial_vector(unsigned short) vial_vector_ushort_t;
-typedef vial_vector(unsigned int) vial_vector_uint_t;
-typedef vial_vector(unsigned long) vial_vector_ulong_t;
+typedef vial_vector(unsigned char) vial_vector_of_uchar;
+typedef vial_vector(unsigned short) vial_vector_of_ushort;
+typedef vial_vector(unsigned int) vial_vector_of_uint;
+typedef vial_vector(unsigned long) vial_vector_of_ulong;
 
-typedef vial_vector(const char *) vial_vector_cstr_t;
+typedef vial_vector(const char *) vial_vector_of_cstr;
 
 #define VIAL_VECTOR_EMPTY { NULL, 0, 0 }
 
@@ -40,7 +40,7 @@ typedef vial_vector(const char *) vial_vector_cstr_t;
 
 static inline void _vial_vector_reserve(void *vec, size_t isize, size_t capacity)
 {
-	vial_vector_void_t *self = (vial_vector_void_t *) vec;
+	vial_vector_of_void *self = vec;
 	if (self->capacity < capacity) {
 		self->capacity *= 2;
 		if (self->capacity < capacity)
@@ -53,7 +53,7 @@ static inline void _vial_vector_reserve(void *vec, size_t isize, size_t capacity
 
 static inline void _vial_vector_shrink(void *vec, size_t isize)
 {
-	vial_vector_void_t *self = (vial_vector_void_t *) vec;
+	vial_vector_of_void *self = vec;
 	if (self->capacity > self->size) {
 		self->capacity = self->size;
 		self->values = realloc(self->values, self->capacity * isize);
@@ -77,6 +77,13 @@ static inline void _vial_vector_shrink(void *vec, size_t isize)
 	vial_vector_reserve((self), (self).size + 1); \
 	memmove((self).values + (idx) + 1, (self).values + (idx), ((self).size - (idx)) * sizeof((self).values[0])); \
 	(self).values[(idx)] = (item); (self).size++; \
+} while (0)
+
+#define vial_vector_insertall(self, idx, items, count) do { \
+	vial_vector_reserve((self), (self).size + (count)); \
+	memmove((self).values + (idx) + (count), (self).values + (idx), ((self).size - (idx)) * sizeof((self).values[0])); \
+	memcpy((self).values + (idx), (items), sizeof((self).values[0]) * (count)); \
+	(self).size += (count); \
 } while (0)
 
 #define vial_vector_remove(self, idx) do { \
