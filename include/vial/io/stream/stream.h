@@ -34,14 +34,14 @@ struct vial_stream;
 
 struct vial_stream_vtable {
 	void (*dispose)(struct vial_stream *self);
-	vial_error_t (*capabilities)(struct vial_stream *self, int *capabilities);
-	vial_error_t (*close)(struct vial_stream *self);
-	vial_error_t (*flush)(struct vial_stream *self);
-	vial_error_t (*seek)(struct vial_stream *self, long offset, enum vial_stream_seek origin);
-	vial_error_t (*position)(struct vial_stream *self, size_t *position);
-	vial_error_t (*available)(struct vial_stream *self, size_t *available);
-	vial_error_t (*read)(struct vial_stream *self, void *buf, size_t size);
-	vial_error_t (*write)(struct vial_stream *self, const void *buf, size_t size);
+	vial_error (*capabilities)(struct vial_stream *self, int *capabilities);
+	vial_error (*close)(struct vial_stream *self);
+	vial_error (*flush)(struct vial_stream *self);
+	vial_error (*seek)(struct vial_stream *self, long offset, enum vial_stream_seek origin);
+	vial_error (*position)(struct vial_stream *self, size_t *position);
+	vial_error (*available)(struct vial_stream *self, size_t *available);
+	vial_error (*read)(struct vial_stream *self, void *buf, size_t size);
+	vial_error (*write)(struct vial_stream *self, const void *buf, size_t size);
 };
 
 struct vial_stream {
@@ -53,46 +53,46 @@ static inline void vial_stream_dispose(struct vial_stream *self)
 	self->vtable->dispose(self);
 }
 
-static inline vial_error_t vial_stream_capabilities(struct vial_stream *self, int *capabilities)
+static inline vial_error vial_stream_capabilities(struct vial_stream *self, int *capabilities)
 {
 	return self->vtable->capabilities(self, capabilities);
 }
 
-static inline vial_error_t vial_stream_close(struct vial_stream *self)
+static inline vial_error vial_stream_close(struct vial_stream *self)
 {
 	return self->vtable->close(self);
 }
 
-static inline vial_error_t vial_stream_flush(struct vial_stream *self)
+static inline vial_error vial_stream_flush(struct vial_stream *self)
 {
 	return self->vtable->flush(self);
 }
 
-static inline vial_error_t vial_stream_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
+static inline vial_error vial_stream_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
 {
 	return self->vtable->seek(self, offset, origin);
 }
 
-static inline vial_error_t vial_stream_position(struct vial_stream *self, size_t *position)
+static inline vial_error vial_stream_position(struct vial_stream *self, size_t *position)
 {
 	return self->vtable->position(self, position);
 }
 
-static inline vial_error_t vial_stream_available(struct vial_stream *self, size_t *available)
+static inline vial_error vial_stream_available(struct vial_stream *self, size_t *available)
 {
 	return self->vtable->available(self, available);
 }
 
-static inline vial_error_t vial_stream_read(struct vial_stream *self, void *buf, size_t size)
+static inline vial_error vial_stream_read(struct vial_stream *self, void *buf, size_t size)
 {
 	return self->vtable->read(self, buf, size);
 }
 
-static inline vial_error_t vial_stream_write(struct vial_stream *self, const void *buf, size_t size)
+static inline vial_error vial_stream_write(struct vial_stream *self, const void *buf, size_t size)
 {
 	return self->vtable->write(self, buf, size);
 }
 
-vial_error_t vial_stream_print(struct vial_stream *self, const char *str);
+vial_error vial_stream_print(struct vial_stream *self, const char *str);
 
 #endif

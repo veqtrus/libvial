@@ -14,7 +14,7 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #define _self ((struct vial_memstream *) self)
 
-static vial_error_t resize(struct vial_memstream *self, size_t size)
+static vial_error resize(struct vial_memstream *self, size_t size)
 {
 	if (self->allocated >= size)
 		return NULL;
@@ -34,7 +34,7 @@ static void impl_dispose(struct vial_stream *self)
 	_self->buf = NULL;
 }
 
-static vial_error_t impl_capabilities(struct vial_stream *self, int *capabilities)
+static vial_error impl_capabilities(struct vial_stream *self, int *capabilities)
 {
 	if (_self->buf == NULL)
 		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
@@ -42,7 +42,7 @@ static vial_error_t impl_capabilities(struct vial_stream *self, int *capabilitie
 	return NULL;
 }
 
-static vial_error_t impl_close(struct vial_stream *self)
+static vial_error impl_close(struct vial_stream *self)
 {
 	if (_self->buf == NULL)
 		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
@@ -52,9 +52,9 @@ static vial_error_t impl_close(struct vial_stream *self)
 	return NULL;
 }
 
-static vial_error_t impl_flush(struct vial_stream *self) { return NULL; }
+static vial_error impl_flush(struct vial_stream *self) { return NULL; }
 
-static vial_error_t impl_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
+static vial_error impl_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
 {
 	if (_self->buf == NULL)
 		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
@@ -92,7 +92,7 @@ static vial_error_t impl_seek(struct vial_stream *self, long offset, enum vial_s
 	return NULL;
 }
 
-static vial_error_t impl_position(struct vial_stream *self, size_t *position)
+static vial_error impl_position(struct vial_stream *self, size_t *position)
 {
 	if (_self->buf == NULL)
 		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
@@ -100,7 +100,7 @@ static vial_error_t impl_position(struct vial_stream *self, size_t *position)
 	return NULL;
 }
 
-static vial_error_t impl_available(struct vial_stream *self, size_t *available)
+static vial_error impl_available(struct vial_stream *self, size_t *available)
 {
 	if (_self->buf == NULL)
 		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
@@ -108,7 +108,7 @@ static vial_error_t impl_available(struct vial_stream *self, size_t *available)
 	return NULL;
 }
 
-static vial_error_t impl_read(struct vial_stream *self, void *buf, size_t size)
+static vial_error impl_read(struct vial_stream *self, void *buf, size_t size)
 {
 	if (_self->buf == NULL)
 		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
@@ -119,7 +119,7 @@ static vial_error_t impl_read(struct vial_stream *self, void *buf, size_t size)
 	return NULL;
 }
 
-static vial_error_t impl_write(struct vial_stream *self, const void *buf, size_t size)
+static vial_error impl_write(struct vial_stream *self, const void *buf, size_t size)
 {
 	if (_self->buf == NULL)
 		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
@@ -143,7 +143,7 @@ static const struct vial_stream_vtable vtable = {
 	impl_write
 };
 
-vial_error_t vial_memstream_init_buf(struct vial_memstream *self, void *buf, size_t size)
+vial_error vial_memstream_init_buf(struct vial_memstream *self, void *buf, size_t size)
 {
 	self->stream.vtable = &vtable;
 	self->buf = buf;
@@ -153,7 +153,7 @@ vial_error_t vial_memstream_init_buf(struct vial_memstream *self, void *buf, siz
 	return NULL;
 }
 
-vial_error_t vial_memstream_init(struct vial_memstream *self, size_t size)
+vial_error vial_memstream_init(struct vial_memstream *self, size_t size)
 {
 	self->stream.vtable = &vtable;
 	self->buf = size == 0 ? NULL : malloc(size);

@@ -18,6 +18,6 @@ struct vial_filestream {
 	FILE *file;
 };
 
-vial_error_t vial_filestream_init(struct vial_filestream *self, FILE *file);
+vial_error vial_filestream_init(struct vial_filestream *self, FILE *file);
 
 #endif

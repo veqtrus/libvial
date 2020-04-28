@@ -18,7 +18,7 @@ https://www.boost.org/LICENSE_1_0.txt
 typedef char *byte_ptr;
 
 static void vial_msort_merge(byte_ptr left, byte_ptr right, byte_ptr end,
-	void *tmp, size_t size, vial_comp_f comp, void *context)
+	void *tmp, size_t size, vial_comp_ctx_f comp, void *context)
 {
 	byte_ptr start = left, mid = right, res = tmp;
 	if (start < mid && comp(mid - size, mid, context) <= 0)
@@ -42,7 +42,7 @@ static void vial_msort_merge(byte_ptr left, byte_ptr right, byte_ptr end,
 	memcpy(start, tmp, end - start);
 }
 
-void vial_msort_tmp(void *ptr, void *tmp, size_t count, size_t size, vial_comp_f comp, void *context)
+void vial_msort_tmp(void *ptr, void *tmp, size_t count, size_t size, vial_comp_ctx_f comp, void *context)
 {
 	size_t half;
 	byte_ptr mid, end;
@@ -57,7 +57,7 @@ void vial_msort_tmp(void *ptr, void *tmp, size_t count, size_t size, vial_comp_f
 	vial_msort_merge(ptr, mid, end, tmp, size, comp, context);
 }
 
-void vial_msort(void *ptr, size_t count, size_t size, vial_comp_f comp, void *context)
+void vial_msort(void *ptr, size_t count, size_t size, vial_comp_ctx_f comp, void *context)
 {
 	void *tmp = malloc(count * size);
 	vial_msort_tmp(ptr, tmp, count, size, comp, context);

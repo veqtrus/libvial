@@ -10,8 +10,10 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stdlib.h>
 
+#include <vial/def.h>
+
 struct sharedptr {
-	vial_sharedptr_dispose_f dispose;
+	vial_dispose_f dispose;
 	volatile int count;
 };
 
@@ -22,7 +24,7 @@ void *vial_sharedptr_malloc(size_t size)
 	return vial_sharedptr_make(size, dispose_nop);
 }
 
-void *vial_sharedptr_make(size_t size, vial_sharedptr_dispose_f dispose)
+void *vial_sharedptr_make(size_t size, vial_dispose_f dispose)
 {
 	struct sharedptr *sp = malloc(size + sizeof(*sp));
 	sp->dispose = dispose;

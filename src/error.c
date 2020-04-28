@@ -22,9 +22,9 @@ static char *error_strdup(const char *s)
 	return d;
 }
 
-vial_error_t vial_error_make(const char *id, const char *message, vial_error_t cause, const char *file, int line)
+vial_error vial_error_make(const char *id, const char *message, vial_error cause, const char *file, int line)
 {
-	vial_error_t error = malloc(sizeof(*error));
+	vial_error error = malloc(sizeof(*error));
 	error->id = error_strdup(id);
 	error->message = error_strdup(message);
 	error->cause = cause;
@@ -33,9 +33,9 @@ vial_error_t vial_error_make(const char *id, const char *message, vial_error_t c
 	return error;
 }
 
-void vial_error_free(vial_error_t self)
+void vial_error_free(vial_error self)
 {
-	for (vial_error_t next; self; self = next) {
+	for (vial_error next; self; self = next) {
 		next = self->cause;
 		free(self->id);
 		free(self->message);
@@ -43,7 +43,7 @@ void vial_error_free(vial_error_t self)
 	}
 }
 
-void vial_error_print(vial_error_t self)
+void vial_error_print(vial_error self)
 {
 	for (; self; self = self->cause)
 		fprintf(stderr, "\nIn \"%s\" line %d:\n%s\n%s\n\n",

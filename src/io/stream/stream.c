@@ -14,7 +14,7 @@ const char *const VIAL_STREAM_IO_ERROR = "VIAL_STREAM_IO_ERROR";
 const char *const VIAL_STREAM_DISPOSED = "VIAL_STREAM_DISPOSED";
 const char *const VIAL_STREAM_NOT_SUPPORTED = "VIAL_STREAM_NOT_SUPPORTED";
 
-vial_error_t vial_stream_print(struct vial_stream *self, const char *str)
+vial_error vial_stream_print(struct vial_stream *self, const char *str)
 {
 	return self->vtable->write(self, str, strlen(str));
 }

@@ -74,7 +74,7 @@ union vsockaddr {
 	sockaddr_in6_t in6;
 };
 
-static vial_error_t get_error(int err, const char *file, int line)
+static vial_error get_error(int err, const char *file, int line)
 {
 	char text[32];
 	sprintf(text, "%d", err);
@@ -101,7 +101,7 @@ static void set_socket(struct vial_socket *self, socket_t socket)
 #endif
 }
 
-static vial_error_t get_sockaddr(const struct vial_socket_addr *self, union vsockaddr *addr)
+static vial_error get_sockaddr(const struct vial_socket_addr *self, union vsockaddr *addr)
 {
 	memset(addr, 0, sizeof(*addr));
 	if (self->family == VIAL_SOCKET_AF_IP4)
@@ -118,7 +118,7 @@ static vial_error_t get_sockaddr(const struct vial_socket_addr *self, union vsoc
 	return NULL;
 }
 
-static vial_error_t set_sockaddr(struct vial_socket_addr *self, const union vsockaddr *addr)
+static vial_error set_sockaddr(struct vial_socket_addr *self, const union vsockaddr *addr)
 {
 	if (addr->in.sin_family == AF_INET)
 		self->family = VIAL_SOCKET_AF_IP4;
@@ -142,9 +142,9 @@ static size_t get_addrinfo_length(const struct addrinfo *addr)
 	return length;
 }
 
-vial_error_t vial_socket_addr_resolve(const char *host, uint16_t port, struct vial_socket_addr **addresses, size_t *count)
+vial_error vial_socket_addr_resolve(const char *host, uint16_t port, struct vial_socket_addr **addresses, size_t *count)
 {
-	vial_error_t e;
+	vial_error e;
 	struct addrinfo *cur_addr_info, *addr_info = NULL;
 	struct vial_socket_addr *cur_addr;
 	char port_str[8];
@@ -173,7 +173,7 @@ vial_error_t vial_socket_addr_resolve(const char *host, uint16_t port, struct vi
 	return NULL;
 }
 
-vial_error_t vial_socket_addr_init(struct vial_socket_addr *self, const char *addr, uint16_t port)
+vial_error vial_socket_addr_init(struct vial_socket_addr *self, const char *addr, uint16_t port)
 {
 	memset(self, 0, sizeof(*self));
 	if (inet_pton(AF_INET6, addr, &self->addr.v6) == 1)
@@ -186,7 +186,7 @@ vial_error_t vial_socket_addr_init(struct vial_socket_addr *self, const char *ad
 	return NULL;
 }
 
-vial_error_t vial_socket_addr_stringify(const struct vial_socket_addr *self, char *str)
+vial_error vial_socket_addr_stringify(const struct vial_socket_addr *self, char *str)
 {
 	union vsockaddr saddr;
 	char addr_str[64] = "";
@@ -223,7 +223,7 @@ int vial_socket_cleanup(void)
 #endif
 }
 
-vial_error_t vial_socket_init(struct vial_socket *self, enum vial_socket_af domain, enum vial_socket_type type)
+vial_error vial_socket_init(struct vial_socket *self, enum vial_socket_af domain, enum vial_socket_type type)
 {
 	int idomain, itype;
 	if (domain == VIAL_SOCKET_AF_IP4)
@@ -250,9 +250,9 @@ vial_error_t vial_socket_init(struct vial_socket *self, enum vial_socket_af doma
 	return NULL;
 }
 
-vial_error_t vial_socket_initconn(struct vial_socket *self, const char *host, uint16_t port)
+vial_error vial_socket_initconn(struct vial_socket *self, const char *host, uint16_t port)
 {
-	vial_error_t e;
+	vial_error e;
 	struct vial_socket_addr *addrs, *addr;
 	size_t addr_len;
 	vial_error_rethrow(vial_socket_addr_resolve(host, port, &addrs, &addr_len));
@@ -273,7 +273,7 @@ vial_error_t vial_socket_initconn(struct vial_socket *self, const char *host, ui
 	return vial_error_new(VIAL_SOCKET_ERROR, "Not found", NULL);
 }
 
-vial_error_t vial_socket_accept(struct vial_socket *self, struct vial_socket *socket, struct vial_socket_addr *address)
+vial_error vial_socket_accept(struct vial_socket *self, struct vial_socket *socket, struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
 	size_t size = sizeof(addr);
@@ -291,7 +291,7 @@ vial_error_t vial_socket_accept(struct vial_socket *self, struct vial_socket *so
 	return NULL;
 }
 
-vial_error_t vial_socket_available(struct vial_socket *self, size_t *available)
+vial_error vial_socket_available(struct vial_socket *self, size_t *available)
 {
 #ifdef VIAL_WINSOCK_VERSION
 	u_long len = 0;
@@ -306,7 +306,7 @@ vial_error_t vial_socket_available(struct vial_socket *self, size_t *available)
 	return NULL;
 }
 
-vial_error_t vial_socket_bind(struct vial_socket *self, struct vial_socket *socket, const struct vial_socket_addr *address)
+vial_error vial_socket_bind(struct vial_socket *self, struct vial_socket *socket, const struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
 	vial_error_rethrow(get_sockaddr(address, &addr));
@@ -322,7 +322,7 @@ vial_error_t vial_socket_bind(struct vial_socket *self, struct vial_socket *sock
 	return NULL;
 }
 
-vial_error_t vial_socket_close(struct vial_socket *self)
+vial_error vial_socket_close(struct vial_socket *self)
 {
 	int res;
 #ifdef VIAL_WINSOCK_VERSION
@@ -335,7 +335,7 @@ vial_error_t vial_socket_close(struct vial_socket *self)
 	return NULL;
 }
 
-vial_error_t vial_socket_connect(struct vial_socket *self, const struct vial_socket_addr *address)
+vial_error vial_socket_connect(struct vial_socket *self, const struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
 	vial_error_rethrow(get_sockaddr(address, &addr));
@@ -344,14 +344,14 @@ vial_error_t vial_socket_connect(struct vial_socket *self, const struct vial_soc
 	return NULL;
 }
 
-vial_error_t vial_socket_listen(struct vial_socket *self, int backlog)
+vial_error vial_socket_listen(struct vial_socket *self, int backlog)
 {
 	if (listen(get_socket(self), backlog))
 		return_error;
 	return NULL;
 }
 
-vial_error_t vial_socket_recv(struct vial_socket *self, void *buffer, size_t *length)
+vial_error vial_socket_recv(struct vial_socket *self, void *buffer, size_t *length)
 {
 	int res = recv(get_socket(self), buffer, *length, 0);
 	if (res < 0) {
@@ -362,7 +362,7 @@ vial_error_t vial_socket_recv(struct vial_socket *self, void *buffer, size_t *le
 	return NULL;
 }
 
-vial_error_t vial_socket_recvfrom(struct vial_socket *self, void *buffer, size_t *length, struct vial_socket_addr *address)
+vial_error vial_socket_recvfrom(struct vial_socket *self, void *buffer, size_t *length, struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
 	size_t size = sizeof(addr);
@@ -377,7 +377,7 @@ vial_error_t vial_socket_recvfrom(struct vial_socket *self, void *buffer, size_t
 	return NULL;
 }
 
-vial_error_t vial_socket_send(struct vial_socket *self, const void *buffer, size_t *length)
+vial_error vial_socket_send(struct vial_socket *self, const void *buffer, size_t *length)
 {
 	int res = send(get_socket(self), buffer, *length, 0);
 	if (res < 0) {
@@ -388,7 +388,7 @@ vial_error_t vial_socket_send(struct vial_socket *self, const void *buffer, size
 	return NULL;
 }
 
-vial_error_t vial_socket_sendto(struct vial_socket *self, const void *buffer, size_t *length, const struct vial_socket_addr *address)
+vial_error vial_socket_sendto(struct vial_socket *self, const void *buffer, size_t *length, const struct vial_socket_addr *address)
 {
 	union vsockaddr addr;
 	vial_error_rethrow(get_sockaddr(address, &addr));
@@ -401,7 +401,7 @@ vial_error_t vial_socket_sendto(struct vial_socket *self, const void *buffer, si
 	return NULL;
 }
 
-vial_error_t vial_socket_shutdown(struct vial_socket *self, enum vial_socket_shut how)
+vial_error vial_socket_shutdown(struct vial_socket *self, enum vial_socket_shut how)
 {
 	int ihow;
 	if (how == VIAL_SOCKET_SHUT_RECV)

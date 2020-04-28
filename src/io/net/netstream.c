@@ -21,39 +21,39 @@ static void impl_dispose(struct vial_stream *self)
 	memset(self, 0, sizeof(struct vial_netstream));
 }
 
-static vial_error_t impl_capabilities(struct vial_stream *self, int *capabilities)
+static vial_error impl_capabilities(struct vial_stream *self, int *capabilities)
 {
 	*capabilities = VIAL_STREAM_CAN_READ | VIAL_STREAM_CAN_WRITE | VIAL_STREAM_CAN_AVAILABLE;
 	return NULL;
 }
 
-static vial_error_t impl_close(struct vial_stream *self)
+static vial_error impl_close(struct vial_stream *self)
 {
-	vial_error_t e = vial_socket_close(&_self->socket);
+	vial_error e = vial_socket_close(&_self->socket);
 	if (e)
 		return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, e);
 	memset(&_self->socket, 0, sizeof(_self->socket));
 	return NULL;
 }
 
-static vial_error_t impl_flush(struct vial_stream *self) { return NULL; }
+static vial_error impl_flush(struct vial_stream *self) { return NULL; }
 
-static vial_error_t impl_not_supported()
+static vial_error impl_not_supported()
 {
 	return vial_error_new(VIAL_STREAM_NOT_SUPPORTED, VIAL_STREAM_NOT_SUPPORTED, NULL);
 }
 
-static vial_error_t impl_available(struct vial_stream *self, size_t *available)
+static vial_error impl_available(struct vial_stream *self, size_t *available)
 {
-	vial_error_t e = vial_socket_available(&_self->socket, available);
+	vial_error e = vial_socket_available(&_self->socket, available);
 	if (e)
 		return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, e);
 	return NULL;
 }
 
-static vial_error_t impl_read(struct vial_stream *self, void *buf, size_t size)
+static vial_error impl_read(struct vial_stream *self, void *buf, size_t size)
 {
-	vial_error_t e;
+	vial_error e;
 	size_t done = 0, read = 0;
 	char *p = buf;
 	uint64_t t0 = vial_mtime();
@@ -75,9 +75,9 @@ static vial_error_t impl_read(struct vial_stream *self, void *buf, size_t size)
 	return NULL;
 }
 
-static vial_error_t impl_write(struct vial_stream *self, const void *buf, size_t size)
+static vial_error impl_write(struct vial_stream *self, const void *buf, size_t size)
 {
-	vial_error_t e;
+	vial_error e;
 	size_t done = 0, write = 0;
 	const char *p = buf;
 	uint64_t t0 = vial_mtime();
@@ -111,7 +111,7 @@ static const struct vial_stream_vtable vtable = {
 	impl_write
 };
 
-vial_error_t vial_netstream_init(struct vial_netstream *self, struct vial_socket socket)
+vial_error vial_netstream_init(struct vial_netstream *self, struct vial_socket socket)
 {
 	self->stream.vtable = &vtable;
 	self->read_timeout = self->write_timeout = 60000;

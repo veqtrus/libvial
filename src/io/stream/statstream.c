@@ -12,15 +12,15 @@ https://www.boost.org/LICENSE_1_0.txt
 
 static void impl_dispose(struct vial_stream *self) { }
 
-static vial_error_t impl_capabilities(struct vial_stream *self, int *capabilities)
+static vial_error impl_capabilities(struct vial_stream *self, int *capabilities)
 {
 	*capabilities = VIAL_STREAM_CAN_ALL ^ VIAL_STREAM_CAN_READ;
 	return NULL;
 }
 
-static vial_error_t impl_nop() { return NULL; }
+static vial_error impl_nop() { return NULL; }
 
-static vial_error_t impl_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
+static vial_error impl_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
 {
 	switch (origin) {
 	case VIAL_STREAM_SEEK_SET:
@@ -39,24 +39,24 @@ static vial_error_t impl_seek(struct vial_stream *self, long offset, enum vial_s
 	return NULL;
 }
 
-static vial_error_t impl_position(struct vial_stream *self, size_t *position)
+static vial_error impl_position(struct vial_stream *self, size_t *position)
 {
 	*position = _self->position;
 	return NULL;
 }
 
-static vial_error_t impl_available(struct vial_stream *self, size_t *available)
+static vial_error impl_available(struct vial_stream *self, size_t *available)
 {
 	*available = _self->size - _self->position;
 	return NULL;
 }
 
-static vial_error_t impl_read(struct vial_stream *self, void *buf, size_t size)
+static vial_error impl_read(struct vial_stream *self, void *buf, size_t size)
 {
 	return vial_error_new(VIAL_STREAM_NOT_SUPPORTED, VIAL_STREAM_NOT_SUPPORTED, NULL);
 }
 
-static vial_error_t impl_write(struct vial_stream *self, const void *buf, size_t size)
+static vial_error impl_write(struct vial_stream *self, const void *buf, size_t size)
 {
 	_self->position += size;
 	if (_self->position > _self->size)
@@ -76,7 +76,7 @@ static const struct vial_stream_vtable vtable = {
 	impl_write
 };
 
-vial_error_t vial_statstream_init(struct vial_statstream *self)
+vial_error vial_statstream_init(struct vial_statstream *self)
 {
 	self->stream.vtable = &vtable;
 	self->size = self->position = 0;

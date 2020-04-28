@@ -11,10 +11,10 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stddef.h>
 
-#include <vial/sort/sort.h>
+#include <vial/def.h>
 
-void vial_msort_tmp(void *ptr, void *tmp, size_t count, size_t size, vial_comp_f comp, void *context);
+void vial_msort_tmp(void *ptr, void *tmp, size_t count, size_t size, vial_comp_ctx_f comp, void *context);
 
-void vial_msort(void *ptr, size_t count, size_t size, vial_comp_f comp, void *context);
+void vial_msort(void *ptr, size_t count, size_t size, vial_comp_ctx_f comp, void *context);
 
 #endif

@@ -44,7 +44,7 @@ struct vial_json vial_json_create_array(void)
 {
 	struct vial_json result;
 	result.type = VIAL_JSON_ARRAY;
-	result.value.as_array = vial_sharedptr_make(sizeof(*result.value.as_array), (vial_sharedptr_dispose_f) dispose_array);
+	result.value.as_array = vial_sharedptr_make(sizeof(*result.value.as_array), (vial_dispose_f) dispose_array);
 	vial_vector_init(*result.value.as_array);
 	return result;
 }
@@ -53,7 +53,7 @@ struct vial_json vial_json_create_object(void)
 {
 	struct vial_json result;
 	result.type = VIAL_JSON_OBJECT;
-	result.value.as_object = vial_sharedptr_make(sizeof(*result.value.as_object), (vial_sharedptr_dispose_f) dispose_object);
+	result.value.as_object = vial_sharedptr_make(sizeof(*result.value.as_object), (vial_dispose_f) dispose_object);
 	vial_vector_init(*result.value.as_object);
 	return result;
 }

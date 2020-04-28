@@ -20,6 +20,6 @@ struct vial_netstream {
 	struct vial_socket socket;
 };
 
-vial_error_t vial_netstream_init(struct vial_netstream *self, struct vial_socket socket);
+vial_error vial_netstream_init(struct vial_netstream *self, struct vial_socket socket);
 
 #endif

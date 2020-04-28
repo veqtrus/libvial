@@ -12,18 +12,18 @@ https://www.boost.org/LICENSE_1_0.txt
 
 static void impl_dispose(struct vial_stream *self) { }
 
-static vial_error_t impl_capabilities(struct vial_stream *self, int *capabilities)
+static vial_error impl_capabilities(struct vial_stream *self, int *capabilities)
 {
 	*capabilities = VIAL_STREAM_CAN_WRITE;
 	return NULL;
 }
 
-static vial_error_t impl_not_supported()
+static vial_error impl_not_supported()
 {
 	return vial_error_new(VIAL_STREAM_NOT_SUPPORTED, VIAL_STREAM_NOT_SUPPORTED, NULL);
 }
 
-static vial_error_t impl_write(struct vial_stream *self, const void *buf, size_t size)
+static vial_error impl_write(struct vial_stream *self, const void *buf, size_t size)
 {
 	if (size == 0) return NULL;
 	struct vial_sha256 *hasher = &((struct vial_hashstream *) self)->hasher;
@@ -43,14 +43,14 @@ static const struct vial_stream_vtable vtable = {
 	impl_write
 };
 
-vial_error_t vial_hashstream_init(struct vial_hashstream *self)
+vial_error vial_hashstream_init(struct vial_hashstream *self)
 {
 	self->stream.vtable = &vtable;
 	vial_sha256_init(&self->hasher);
 	return NULL;
 }
 
-vial_error_t vial_hashstream_sha256(struct vial_hashstream *self, void *buf)
+vial_error vial_hashstream_sha256(struct vial_hashstream *self, void *buf)
 {
 	struct vial_sha256 *hasher = &self->hasher;
 	vial_sha256_done(hasher, buf);
@@ -58,7 +58,7 @@ vial_error_t vial_hashstream_sha256(struct vial_hashstream *self, void *buf)
 	return NULL;
 }
 
-vial_error_t vial_hashstream_sha256d(struct vial_hashstream *self, void *buf)
+vial_error vial_hashstream_sha256d(struct vial_hashstream *self, void *buf)
 {
 	struct vial_sha256 *hasher = &self->hasher;
 	vial_sha256_done(hasher, buf);

@@ -18,6 +18,6 @@ struct vial_statstream {
 	size_t size, position;
 };
 
-vial_error_t vial_statstream_init(struct vial_statstream *self);
+vial_error vial_statstream_init(struct vial_statstream *self);
 
 #endif

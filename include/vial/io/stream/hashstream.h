@@ -18,10 +18,10 @@ struct vial_hashstream {
 	struct vial_sha256 hasher;
 };
 
-vial_error_t vial_hashstream_init(struct vial_hashstream *self);
+vial_error vial_hashstream_init(struct vial_hashstream *self);
 
-vial_error_t vial_hashstream_sha256(struct vial_hashstream *self, void *buf);
+vial_error vial_hashstream_sha256(struct vial_hashstream *self, void *buf);
 
-vial_error_t vial_hashstream_sha256d(struct vial_hashstream *self, void *buf);
+vial_error vial_hashstream_sha256d(struct vial_hashstream *self, void *buf);
 
 #endif

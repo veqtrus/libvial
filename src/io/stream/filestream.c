@@ -19,7 +19,7 @@ static void impl_dispose(struct vial_stream *self)
 	_self->file = NULL;
 }
 
-static vial_error_t impl_capabilities(struct vial_stream *self, int *capabilities)
+static vial_error impl_capabilities(struct vial_stream *self, int *capabilities)
 {
 	if (_self->file == NULL)
 		return vial_error_new(VIAL_STREAM_DISPOSED, VIAL_STREAM_DISPOSED, NULL);
@@ -27,7 +27,7 @@ static vial_error_t impl_capabilities(struct vial_stream *self, int *capabilitie
 	return NULL;
 }
 
-static vial_error_t impl_close(struct vial_stream *self)
+static vial_error impl_close(struct vial_stream *self)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
@@ -38,7 +38,7 @@ static vial_error_t impl_close(struct vial_stream *self)
 	return NULL;
 }
 
-static vial_error_t impl_flush(struct vial_stream *self)
+static vial_error impl_flush(struct vial_stream *self)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
@@ -48,7 +48,7 @@ static vial_error_t impl_flush(struct vial_stream *self)
 	return NULL;
 }
 
-static vial_error_t impl_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
+static vial_error impl_seek(struct vial_stream *self, long offset, enum vial_stream_seek origin)
 {
 	FILE *file = _self->file;
 	int file_origin;
@@ -70,7 +70,7 @@ static vial_error_t impl_seek(struct vial_stream *self, long offset, enum vial_s
 	return NULL;
 }
 
-static vial_error_t impl_position(struct vial_stream *self, size_t *position)
+static vial_error impl_position(struct vial_stream *self, size_t *position)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
@@ -82,7 +82,7 @@ static vial_error_t impl_position(struct vial_stream *self, size_t *position)
 	return NULL;
 }
 
-static vial_error_t impl_available(struct vial_stream *self, size_t *available)
+static vial_error impl_available(struct vial_stream *self, size_t *available)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
@@ -100,7 +100,7 @@ static vial_error_t impl_available(struct vial_stream *self, size_t *available)
 	return NULL;
 }
 
-static vial_error_t impl_read(struct vial_stream *self, void *buf, size_t size)
+static vial_error impl_read(struct vial_stream *self, void *buf, size_t size)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
@@ -112,7 +112,7 @@ static vial_error_t impl_read(struct vial_stream *self, void *buf, size_t size)
 	return vial_error_new(VIAL_STREAM_IO_ERROR, VIAL_STREAM_IO_ERROR, NULL);
 }
 
-static vial_error_t impl_write(struct vial_stream *self, const void *buf, size_t size)
+static vial_error impl_write(struct vial_stream *self, const void *buf, size_t size)
 {
 	FILE *file = _self->file;
 	if (file == NULL)
@@ -136,7 +136,7 @@ static const struct vial_stream_vtable vtable = {
 	impl_write
 };
 
-vial_error_t vial_filestream_init(struct vial_filestream *self, FILE *file)
+vial_error vial_filestream_init(struct vial_filestream *self, FILE *file)
 {
 	self->stream.vtable = &vtable;
 	self->file = file;

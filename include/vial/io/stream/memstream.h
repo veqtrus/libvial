@@ -21,11 +21,11 @@ struct vial_memstream {
 	bool resizeable;
 };
 
-vial_error_t vial_memstream_init_buf(struct vial_memstream *self, void *buf, size_t size);
+vial_error vial_memstream_init_buf(struct vial_memstream *self, void *buf, size_t size);
 
-vial_error_t vial_memstream_init(struct vial_memstream *self, size_t size);
+vial_error vial_memstream_init(struct vial_memstream *self, size_t size);
 
-static inline vial_error_t vial_memstream_copyto(struct vial_memstream *self, struct vial_stream *dst)
+static inline vial_error vial_memstream_copyto(struct vial_memstream *self, struct vial_stream *dst)
 {
 	return dst->vtable->write(dst, self->buf, self->size);
 }
