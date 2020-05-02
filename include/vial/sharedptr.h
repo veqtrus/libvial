@@ -11,7 +11,7 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stddef.h>
 
-#include <vial/def.h>
+#include <vial/func.h>
 
 void *vial_sharedptr_malloc(size_t size);
 

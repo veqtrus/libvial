@@ -11,7 +11,7 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stddef.h>
 
-#include <vial/def.h>
+#include <vial/func.h>
 
 void vial_msort_tmp(void *ptr, void *tmp, size_t count, size_t size, vial_comp_ctx_f comp, void *context);
 

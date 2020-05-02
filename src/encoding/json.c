@@ -12,22 +12,22 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/encoding/json.h>
 
-static void dispose_array(vial_json_array array)
+static void dispose_array(struct vial_json_array *array)
 {
 	struct vial_json *item;
-	vial_vector_foreach(item, *array)
+	vial_vector_foreach(item, array->vec)
 		vial_json_leave(item);
-	vial_vector_dispose(*array);
+	vial_vector_dispose(array->vec);
 }
 
-static void dispose_object(vial_json_object object)
+static void dispose_object(struct vial_json_object *object)
 {
-	struct vial_json_keyvalue *item;
-	vial_vector_foreach(item, *object) {
-		vial_json_leave(&item->value);
-		free(item->key);
-	}
-	vial_vector_dispose(*object);
+	vial_map_dispose(object->map);
+}
+
+static void dispose_key(char **p_key)
+{
+	free(*p_key);
 }
 
 struct vial_json vial_json_create_str(const char *value)
@@ -45,8 +45,13 @@ struct vial_json vial_json_create_array(void)
 	struct vial_json result;
 	result.type = VIAL_JSON_ARRAY;
 	result.value.as_array = vial_sharedptr_make(sizeof(*result.value.as_array), (vial_dispose_f) dispose_array);
-	vial_vector_init(*result.value.as_array);
+	vial_vector_init(result.value.as_array->vec);
 	return result;
+}
+
+static int key_comp(const char **l, const char **r)
+{
+	return strcmp(*l, *r);
 }
 
 struct vial_json vial_json_create_object(void)
@@ -54,50 +59,40 @@ struct vial_json vial_json_create_object(void)
 	struct vial_json result;
 	result.type = VIAL_JSON_OBJECT;
 	result.value.as_object = vial_sharedptr_make(sizeof(*result.value.as_object), (vial_dispose_f) dispose_object);
-	vial_vector_init(*result.value.as_object);
+	vial_map_init(result.value.as_object->map, (vial_comp_f) key_comp);
+	result.value.as_object->map.dispose_key = (vial_dispose_f) dispose_key;
+	result.value.as_object->map.dispose_value = (vial_dispose_f) vial_json_leave;
 	return result;
 }
 
-void vial_json_push(struct vial_json *self, struct vial_json item)
+void vial_json_push_move(struct vial_json self, struct vial_json item)
 {
-	if (self->type == VIAL_JSON_ARRAY)
-		vial_vector_add(*self->value.as_array, item);
+	if (self.type == VIAL_JSON_ARRAY)
+		vial_vector_add(self.value.as_array->vec, item);
 }
 
-void vial_json_put(struct vial_json *self, const char *key, struct vial_json item)
+void vial_json_put_move(struct vial_json self, const char *key, struct vial_json item)
 {
-	struct vial_json_keyvalue value;
-	if (self->type != VIAL_JSON_OBJECT)
+	if (self.type != VIAL_JSON_OBJECT)
 		return;
-	value.value = item;
-	value.key = vial_strdup(key);
-	vial_vector_add(*self->value.as_object, value);
+	vial_map_put(self.value.as_object->map, vial_strdup(key), item);
 }
 
-struct vial_json vial_json_at(struct vial_json *self, size_t idx)
+struct vial_json vial_json_at(struct vial_json self, size_t idx)
 {
-	if (self->type == VIAL_JSON_ARRAY && idx < self->value.as_array->size)
-		return vial_vector_at(*self->value.as_array, idx);
-	if (self->type == VIAL_JSON_OBJECT && idx < self->value.as_object->size)
-		return vial_vector_at(*self->value.as_object, idx).value;
+	if (self.type == VIAL_JSON_ARRAY && idx < self.value.as_array->vec.size)
+		return vial_vector_at(self.value.as_array->vec, idx);
 	return vial_json_create_invalid();
 }
 
-struct vial_json vial_json_get(struct vial_json *self, const char *key)
+struct vial_json vial_json_get(struct vial_json self, const char *key)
 {
-	struct vial_json_keyvalue *item;
-	if (self->type == VIAL_JSON_OBJECT)
-		vial_vector_foreach(item, *self->value.as_object)
-			if (strcmp(item->key, key) == 0)
-				return item->value;
+	struct vial_json *result;
+	if (self.type == VIAL_JSON_OBJECT) {
+		result = vial_map_get(self.value.as_object->map, key);
+		return result != NULL ? *result : vial_json_create_invalid();
+	}
 	return vial_json_create_invalid();
-}
-
-const char *vial_json_key(struct vial_json *self, size_t idx)
-{
-	if (self->type == VIAL_JSON_OBJECT && idx < self->value.as_object->size)
-		return vial_vector_at(*self->value.as_object, idx).key;
-	return NULL;
 }
 
 static void skip_whitespace(const char **p_str)
@@ -215,7 +210,7 @@ static struct vial_json parse_value(const char **p_str, int level)
 		}
 		while (*c != ']') {
 			tmp_value = parse_value(&c, level + 1);
-			vial_json_push(&value, tmp_value);
+			vial_json_push_move(value, tmp_value);
 			if (tmp_value.type == VIAL_JSON_INVALID)
 				goto parse_error;
 			if (*c == ',')
@@ -241,7 +236,7 @@ static struct vial_json parse_value(const char **p_str, int level)
 			}
 			c++;
 			tmp_value = parse_value(&c, level + 1);
-			vial_json_put(&value, vial_string_cstr(&tmp_str), tmp_value);
+			vial_json_put_move(value, vial_string_cstr(&tmp_str), tmp_value);
 			vial_string_clear(&tmp_str);
 			if (tmp_value.type == VIAL_JSON_INVALID)
 				goto parse_error;
@@ -322,9 +317,32 @@ static void append_indent(struct vial_string *result, const char *indent, int le
 		vial_string_append_cstr(result, indent);
 }
 
+struct object_iter_ctx {
+	size_t i;
+	struct vial_string *result;
+	const char *indent;
+	int level;
+};
+
+static void append_value(struct vial_string *result, struct vial_json *value, const char *indent, int level);
+
+static void append_object_iterator(const char **p_key, struct vial_json *value, struct object_iter_ctx *ctx)
+{
+	if (ctx->i != 0)
+		vial_string_push(ctx->result, ',');
+	append_indent(ctx->result, ctx->indent, ctx->level);
+	append_string(ctx->result, *p_key);
+	vial_string_push(ctx->result, ':');
+	if (ctx->indent != NULL)
+		vial_string_push(ctx->result, ' ');
+	append_value(ctx->result, value, ctx->indent, ctx->level);
+	ctx->i++;
+}
+
 static void append_value(struct vial_string *result, struct vial_json *value, const char *indent, int level)
 {
 	size_t i, len;
+	struct object_iter_ctx obj_iter_ctx;
 	switch (value->type) {
 	case VIAL_JSON_NULL:
 		vial_string_append_cstr(result, "null");
@@ -343,29 +361,23 @@ static void append_value(struct vial_string *result, struct vial_json *value, co
 		break;
 	case VIAL_JSON_ARRAY:
 		vial_string_push(result, '[');
-		len = vial_json_length(value);
+		len = value->value.as_array->vec.size;
 		for (i = 0; i < len; i++) {
 			if (i != 0)
 				vial_string_push(result, ',');
 			append_indent(result, indent, level + 1);
-			append_value(result, &vial_vector_at(*value->value.as_array, i), indent, level + 1);
+			append_value(result, &vial_vector_at(value->value.as_array->vec, i), indent, level + 1);
 		}
 		append_indent(result, indent, level);
 		vial_string_push(result, ']');
 		break;
 	case VIAL_JSON_OBJECT:
 		vial_string_push(result, '{');
-		len = vial_json_length(value);
-		for (i = 0; i < len; i++) {
-			if (i != 0)
-				vial_string_push(result, ',');
-			append_indent(result, indent, level + 1);
-			append_string(result, vial_vector_at(*value->value.as_object, i).key);
-			vial_string_push(result, ':');
-			if (indent != NULL)
-				vial_string_push(result, ' ');
-			append_value(result, &vial_vector_at(*value->value.as_object, i).value, indent, level + 1);
-		}
+		obj_iter_ctx.i = 0;
+		obj_iter_ctx.result = result;
+		obj_iter_ctx.indent = indent;
+		obj_iter_ctx.level = level + 1;
+		vial_map_foreach(value->value.as_object->map, (vial_biconsumer_f) append_object_iterator, &obj_iter_ctx);
 		append_indent(result, indent, level);
 		vial_string_push(result, '}');
 		break;
@@ -374,10 +386,10 @@ static void append_value(struct vial_string *result, struct vial_json *value, co
 	}
 }
 
-struct vial_string vial_json_encode(struct vial_json *self, const char *indent)
+struct vial_string vial_json_encode(struct vial_json self, const char *indent)
 {
 	struct vial_string result;
 	vial_string_init(&result, NULL);
-	append_value(&result, self, indent, 0);
+	append_value(&result, &self, indent, 0);
 	return result;
 }
