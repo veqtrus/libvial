@@ -13,27 +13,46 @@ https://www.boost.org/LICENSE_1_0.txt
 /* This is based on SHA256 implementation in LibTomCrypt that was released into
  * public domain by Tom St Denis. */
 
-#define GET_BE32(buf) ( \
-	(((uint32_t) (buf)[0]) << 24) | \
-	(((uint32_t) (buf)[1]) << 16) | \
-	(((uint32_t) (buf)[2]) << 8) | \
-	((uint32_t) (buf)[3]) )
-#define PUT_BE32(buf, val) do { \
-		(buf)[0] = ((val) >> 24) & 0xFF; \
-		(buf)[1] = ((val) >> 16) & 0xFF; \
-		(buf)[2] = ((val) >> 8) & 0xFF; \
-		(buf)[3] = (val) & 0xFF; \
-	} while (0)
-#define PUT_BE64(buf, val) do { \
-		(buf)[0] = ((val) >> 56) & 0xFF; \
-		(buf)[1] = ((val) >> 48) & 0xFF; \
-		(buf)[2] = ((val) >> 40) & 0xFF; \
-		(buf)[3] = ((val) >> 32) & 0xFF; \
-		(buf)[4] = ((val) >> 24) & 0xFF; \
-		(buf)[5] = ((val) >> 16) & 0xFF; \
-		(buf)[6] = ((val) >> 8) & 0xFF; \
-		(buf)[7] = (val) & 0xFF; \
-	} while (0)
+static inline
+uint32_t get_be32(const uint8_t *buf)
+{
+	return (((((((uint32_t) buf[0]) << 8)
+		| buf[1]) << 8)
+			| buf[2]) << 8)
+				| buf[3];
+}
+
+static inline
+void put_be32(uint8_t *buf, uint32_t val)
+{
+	buf[3] = val & 0xFF;
+	val >>= 8;
+	buf[2] = val & 0xFF;
+	val >>= 8;
+	buf[1] = val & 0xFF;
+	val >>= 8;
+	buf[0] = val;
+}
+
+static inline
+void put_be64(uint8_t *buf, uint64_t val)
+{
+	buf[7] = val & 0xFF;
+	val >>= 8;
+	buf[6] = val & 0xFF;
+	val >>= 8;
+	buf[5] = val & 0xFF;
+	val >>= 8;
+	buf[4] = val & 0xFF;
+	val >>= 8;
+	buf[3] = val & 0xFF;
+	val >>= 8;
+	buf[2] = val & 0xFF;
+	val >>= 8;
+	buf[1] = val & 0xFF;
+	val >>= 8;
+	buf[0] = val;
+}
 
 /* the K array */
 static const uint32_t K[64] = {
@@ -71,6 +90,14 @@ static void sha256_compress(struct vial_sha256 *md, const uint8_t *buf)
 	int i;
 	uint32_t a, b, c, d, e, f, g, h,
 		T1, T2, W[64];
+	/* copy 512 bits from buffer into W[0..15] */
+	for (i = 0; i < 16; ++i) {
+		W[i] = get_be32(buf);
+		buf += 4;
+	}
+	/* fill W[16..63] */
+	for (i = 16; i < 64; ++i)
+		W[i] = sigma1(W[i - 2]) + W[i - 7] + sigma0(W[i - 15]) + W[i - 16];
 	/* copy state */
 	a = md->state[0];
 	b = md->state[1];
@@ -80,14 +107,6 @@ static void sha256_compress(struct vial_sha256 *md, const uint8_t *buf)
 	f = md->state[5];
 	g = md->state[6];
 	h = md->state[7];
-	/* copy 512 bits from buffer into W[0..15] */
-	for (i = 0; i < 16; ++i) {
-		W[i] = GET_BE32(buf);
-		buf += 4;
-	}
-	/* fill W[16..63] */
-	for (i = 16; i < 64; ++i)
-		W[i] = sigma1(W[i - 2]) + W[i - 7] + sigma0(W[i - 15]) + W[i - 16];
 	/* compress */
 	for (i = 0; i < 64; ++i) {
 		T1 = h + Sigma1(e) + Ch(e, f, g) + K[i] + W[i];
@@ -183,11 +202,11 @@ void vial_sha256_done(struct vial_sha256 *self, uint8_t *out)
 	while (self->curlen < 56)
 		self->buf[self->curlen++] = (uint8_t) 0;
 	/* store length */
-	PUT_BE64(self->buf + 56, self->length);
+	put_be64(self->buf + 56, self->length);
 	sha256_compress(self, self->buf);
 	/* copy output */
 	for (i = 0; i < 8; ++i) {
-		PUT_BE32(out, self->state[i]);
+		put_be32(out, self->state[i]);
 		out += 4;
 	}
 }
