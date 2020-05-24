@@ -49,14 +49,14 @@ void _vial_map_dispose(vial_map_of_voidp_voidp *self, struct vial_map_node *node
 
 #define vial_map_dispose(self) _vial_map_dispose((vial_map_of_voidp_voidp *) &(self), (self).root)
 
-void *_vial_map_get(vial_map_of_voidp_voidp *self, struct vial_map_node *node, const void *key);
+void *_vial_map_get(vial_map_of_voidp_voidp *self, const void *key);
 
 #define vial_map_get(self, k) ((self).tmp_key = (k), \
-	(((self).tmp_node = _vial_map_get((vial_map_of_voidp_voidp *) &(self), (self).root, &(self).tmp_key)) != NULL \
+	(((self).tmp_node = _vial_map_get((vial_map_of_voidp_voidp *) &(self), &(self).tmp_key)) != NULL \
 	? &(self).tmp_node->value : NULL))
 
 #define vial_map_contains(self, k) ((self).tmp_key = (k), \
-	_vial_map_get((vial_map_of_voidp_voidp *) &(self), (self).root, &(self).tmp_key) != NULL)
+	_vial_map_get((vial_map_of_voidp_voidp *) &(self), &(self).tmp_key) != NULL)
 
 void *_vial_map_put(vial_map_of_voidp_voidp *self, struct vial_map_node **p_node, const void *key);
 
@@ -70,7 +70,7 @@ void _vial_map_remove(vial_map_of_voidp_voidp *self, struct vial_map_node **p_no
 
 #define vial_map_remove(self, k) do { \
 	(self).tmp_key = (k); \
-	_vial_map_remove(&(self), &(self).root, &(self).tmp_key); \
+	_vial_map_remove((vial_map_of_voidp_voidp *) &(self), &(self).root, &(self).tmp_key); \
 } while (0)
 
 void _vial_map_foreach(vial_map_of_voidp_voidp *self, struct vial_map_node *node, vial_biconsumer_f action, void *ctx);

@@ -24,8 +24,9 @@ void _vial_map_dispose(vial_map_of_voidp_voidp *self, struct vial_map_node *node
 	free(node);
 }
 
-void *_vial_map_get(vial_map_of_voidp_voidp *self, struct vial_map_node *node, const void *key)
+void *_vial_map_get(vial_map_of_voidp_voidp *self, const void *key)
 {
+	struct vial_map_node *node = self->root;
 	int cmp;
 	while (node != NULL) {
 		cmp = self->comp(key, ((char *) node) + self->key_offset);
@@ -136,6 +137,26 @@ void *_vial_map_put(vial_map_of_voidp_voidp *self, struct vial_map_node **p_node
 	return result;
 }
 
+static void node_remove(struct vial_map_node **p_node)
+{
+	struct vial_map_node *node = *p_node, *left = node->left, *right = node->right;
+	struct vial_map_node **p_succ;
+	free(node);
+	if (left == NULL) {
+		*p_node = right;
+	} else if (right == NULL) {
+		*p_node = left;
+	} else {
+		p_succ = &right;
+		while ((*p_succ)->left != NULL)
+			p_succ = &(*p_succ)->left;
+		*p_node = node = *p_succ;
+		*p_succ = node->right;
+		node->left = left;
+		node->right = right;
+	}
+}
+
 void _vial_map_remove(vial_map_of_voidp_voidp *self, struct vial_map_node **p_node, const void *key)
 {
 	struct vial_map_node *node = *p_node;
@@ -147,14 +168,12 @@ void _vial_map_remove(vial_map_of_voidp_voidp *self, struct vial_map_node **p_no
 	} else if (cmp > 0) {
 		_vial_map_remove(self, &node->right, key);
 	} else {
+		self->size--;
 		if (self->dispose_key != NULL)
 			self->dispose_key(((char *) node) + self->key_offset);
 		if (self->dispose_value != NULL)
 			self->dispose_value(((char *) node) + self->value_offset);
-		free(node);
-		*p_node = NULL;
-		self->size--;
-		return;
+		node_remove(p_node);
 	}
 	node_rebalance(p_node);
 }
