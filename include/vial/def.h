@@ -11,4 +11,15 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #define vial_ptr_diff(hi, lo) (((const char *) (hi)) - ((const char *) (lo)))
 
+#define VIAL_BIN_O(N) ( ((N) & 1) \
+	| (((N) >> 2) & 2) \
+	| (((N) >> 4) & 4) \
+	| (((N) >> 6) & 8) \
+	| (((N) >> 8) & 16) \
+	| (((N) >> 10) & 32) \
+	| (((N) >> 12) & 64) \
+	| (((N) >> 14) & 128) )
+
+#define VIAL_BIN(N) VIAL_BIN_O(0 ## N)
+
 #endif
