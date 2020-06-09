@@ -11,48 +11,54 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stdint.h>
 
+#define VIAL_RANDOM_INVP(N) (1.0 / (1ULL << (N)))
+#define VIAL_RANDOM_PCG_MUL 6364136223846793005U
+#define VIAL_RANDOM_PCG_INC 73U
+
 struct vial_random {
 	uint64_t s;
 };
 
 static inline
+uint64_t _vial_random_next(struct vial_random *self)
+{
+	/* Based on PCG, see https://www.pcg-random.org/ */
+	uint64_t x;
+	unsigned r;
+	x = self->s;
+	self->s = x * VIAL_RANDOM_PCG_MUL + VIAL_RANDOM_PCG_INC;
+	r = (x >> 60) + 4;
+	x ^= x >> 23;
+	return x ^ (x << r);
+}
+
+static inline
 void vial_random_seed(struct vial_random *self, uint64_t seed)
 {
-	seed += 73U;
-	self->s = seed * 6364136223846793005U + 73U;
+	seed += VIAL_RANDOM_PCG_INC;
+	self->s = seed * VIAL_RANDOM_PCG_MUL + VIAL_RANDOM_PCG_INC;
 }
 
 static inline
 uint32_t vial_random_int(struct vial_random *self)
 {
-	/* Based on PCG, see https://www.pcg-random.org/ */
-	uint64_t s;
-	uint32_t x;
-	unsigned r;
-	s = self->s;
-	self->s = s * 6364136223846793005U + 73U;
-	r = s >> 60;
-	x = s >> 28;
-	x = ((x >> (r + 4)) ^ x) * 277803737U;
-	return (x >> 22) ^ x;
+	return _vial_random_next(self) >> 32;
 }
 
 static inline
 float vial_random_float(struct vial_random *self)
 {
-	return vial_random_int(self) / (float) 0x100000000U;
+	return vial_random_int(self) * (float) VIAL_RANDOM_INVP(32);
 }
 
 static inline
 double vial_random_double(struct vial_random *self)
 {
-	return vial_random_int(self) / (double) 0x100000000U;
+	return (_vial_random_next(self) >> 8) * VIAL_RANDOM_INVP(56);
 }
 
-static inline
-uint32_t vial_random_range(struct vial_random *self, uint32_t range)
-{
-	return (((uint64_t) vial_random_int(self)) * range) >> 32;
-}
+uint32_t vial_random_range(struct vial_random *self, uint32_t range);
+
+double vial_random_normal(struct vial_random *self, double *second);
 
 #endif
