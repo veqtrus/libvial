@@ -13,10 +13,11 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <vial/crypto/sha256.h>
 
 /* SHA-256 */
-struct vial_hashstream {
-	struct vial_stream stream;
+VIAL_BEGIN_CLASS_DECL(vial_hashstream, vial_object)
+	VIAL_IMPLEMENTS(vial_stream);
 	struct vial_sha256 hasher;
-};
+VIAL_END_CLASS_DECL;
+VIAL_BEGIN_VIRTUALS(vial_hashstream) VIAL_END_VIRTUALS;
 
 vial_error vial_hashstream_init(struct vial_hashstream *self);
 

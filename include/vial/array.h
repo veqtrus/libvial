@@ -18,3 +18,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef foreach
 #define foreach(i, ptr, len) for ((i) = (ptr); (i) < (ptr) + (len); ++(i))
 #endif
+
+#ifndef vial_array_reverse
+#include <stddef.h>
+#define vial_array_reverse(T, arr, len) do { \
+	T vial_tmp; T *vial_l; T *vial_r; \
+	for (vial_l = (arr), vial_r = vial_l + (len) - 1; vial_l < vial_r; ++vial_l, --vial_r) { \
+		vial_tmp = *vial_l; *vial_l = *vial_r; *vial_r = vial_tmp; \
+	} \
+} while (0)
+#endif

@@ -15,6 +15,8 @@ char *vial_strdup(const char *s);
 
 int vial_cstr_starts(const char *s, const char *b);
 
+char *vial_cstr_reverse(char *s);
+
 #define VIAL_STRING_STATIC_SIZE 16
 
 struct vial_string {
@@ -40,6 +42,11 @@ static inline const char *vial_string_cstr(const struct vial_string *self)
 static inline char *vial_string_cstr_mut(struct vial_string *self)
 {
 	return self->length < VIAL_STRING_STATIC_SIZE ? self->str.static_buf : self->str.dynamic.buf;
+}
+
+static inline char vial_string_at(const struct vial_string *self, size_t index)
+{
+	return vial_string_cstr(self)[index];
 }
 
 static inline char vial_string_get(const struct vial_string *self, size_t index)

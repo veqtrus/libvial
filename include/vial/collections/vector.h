@@ -15,6 +15,7 @@ https://www.boost.org/LICENSE_1_0.txt
 #define vial_vector(T) struct { T *values; size_t size, capacity; }
 
 typedef vial_vector(void) vial_vector_of_void;
+typedef vial_vector(void *) vial_vector_of_voidp;
 
 typedef vial_vector(char) vial_vector_of_char;
 typedef vial_vector(short) vial_vector_of_short;

@@ -17,4 +17,6 @@ typedef int (*vial_comp_ctx_f)(const void *l, const void *r, void *ctx);
 typedef void (*vial_consumer_f)(const void *v, void *ctx);
 typedef void (*vial_biconsumer_f)(const void *a, const void *b, void *ctx);
 
+void vial_dispose_nop(void *p);
+
 #endif

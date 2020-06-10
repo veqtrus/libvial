@@ -10,20 +10,13 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <stddef.h>
 
-static void impl_dispose(struct vial_stream *self) { }
-
-static vial_error impl_capabilities(struct vial_stream *self, int *capabilities)
+static vial_error impl_capabilities(void *self, int *capabilities)
 {
 	*capabilities = VIAL_STREAM_CAN_WRITE;
 	return NULL;
 }
 
-static vial_error impl_not_supported()
-{
-	return vial_error_new(VIAL_STREAM_NOT_SUPPORTED, VIAL_STREAM_NOT_SUPPORTED, NULL);
-}
-
-static vial_error impl_write(struct vial_stream *self, const void *buf, size_t size)
+static vial_error impl_write(void *self, const void *buf, size_t size)
 {
 	if (size == 0) return NULL;
 	struct vial_sha256 *hasher = &((struct vial_hashstream *) self)->hasher;
@@ -31,21 +24,24 @@ static vial_error impl_write(struct vial_stream *self, const void *buf, size_t s
 	return NULL;
 }
 
-static const struct vial_stream_vtable vtable = {
-	impl_dispose,
+VIAL_BEGIN_CLASS_DEF(vial_hashstream, vial_object) VIAL_END_CLASS_DEF;
+
+VIAL_BEGIN_IMPLEMENTATION(vial_hashstream, vial_stream)
 	impl_capabilities,
-	impl_not_supported,
-	impl_not_supported,
-	impl_not_supported,
-	impl_not_supported,
-	impl_not_supported,
-	impl_not_supported,
-	impl_write
-};
+	vial_throws_notsup_error,
+	vial_throws_notsup_error,
+	vial_throws_notsup_error,
+	vial_throws_notsup_error,
+	vial_throws_notsup_error,
+	vial_throws_notsup_error,
+	impl_write,
+VIAL_END_IMPLEMENTATION(vial_hashstream, vial_stream);
 
 vial_error vial_hashstream_init(struct vial_hashstream *self)
 {
-	self->stream.vtable = &vtable;
+	vial_object_init(&self->as_vial_object);
+	self->as_vial_object.typeinfo = &vial_hashstream_typeinfo;
+	self->as_vial_stream.vtable = &vial_hashstream_as_vial_stream;
 	vial_sha256_init(&self->hasher);
 	return NULL;
 }

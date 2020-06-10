@@ -28,6 +28,17 @@ int vial_cstr_starts(const char *s, const char *b)
 	return 1;
 }
 
+char *vial_cstr_reverse(char *s)
+{
+	char t, *l, *r;
+	l = s;
+	r = s + strlen(s) - 1;
+	for (; l < r; ++l, --r) {
+		t = *l; *l = *r; *r = t;
+	}
+	return s;
+}
+
 void vial_string_init(struct vial_string *self, const char *s)
 {
 	if (s == NULL) {

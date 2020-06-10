@@ -12,9 +12,13 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <stddef.h>
 #include <stdint.h>
 
+#include <vial/types.h>
 #include <vial/error.h>
 
-extern const char *const VIAL_SOCKET_ERROR;
+VIAL_BEGIN_CLASS_DECL(vial_socket_error, vial_io_error) VIAL_END_CLASS_DECL;
+VIAL_BEGIN_VIRTUALS(vial_socket_error) VIAL_END_VIRTUALS;
+
+vial_error vial_socket_error_new(const char *message, vial_error cause);
 
 enum vial_socket_af { VIAL_SOCKET_AF_IP4, VIAL_SOCKET_AF_IP6 };
 

@@ -13,10 +13,11 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/io/stream/stream.h>
 
-struct vial_filestream {
-	struct vial_stream stream;
+VIAL_BEGIN_CLASS_DECL(vial_filestream, vial_object)
+	VIAL_IMPLEMENTS(vial_stream);
 	FILE *file;
-};
+VIAL_END_CLASS_DECL;
+VIAL_BEGIN_VIRTUALS(vial_filestream) VIAL_END_VIRTUALS;
 
 vial_error vial_filestream_init(struct vial_filestream *self, FILE *file);
 
