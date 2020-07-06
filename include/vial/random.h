@@ -59,6 +59,12 @@ double vial_random_double(struct vial_random *self)
 
 uint32_t vial_random_range(struct vial_random *self, uint32_t range);
 
+static inline
+uint32_t vial_random_between(struct vial_random *self, uint32_t incl_min, uint32_t excl_max)
+{
+	return incl_min + vial_random_range(self, excl_max - incl_min);
+}
+
 double vial_random_normal(struct vial_random *self, double *second);
 
 #endif

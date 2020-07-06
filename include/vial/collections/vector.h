@@ -39,9 +39,8 @@ typedef vial_vector(const char *) vial_vector_of_cstr;
 
 #define vial_vector_last(self) (self).values[(self).size - 1]
 
-static inline void _vial_vector_reserve(void *vec, size_t isize, size_t capacity)
+static inline void _vial_vector_reserve(vial_vector_of_void *self, size_t isize, size_t capacity)
 {
-	vial_vector_of_void *self = vec;
 	if (self->capacity < capacity) {
 		self->capacity *= 2;
 		if (self->capacity < capacity)
@@ -50,18 +49,17 @@ static inline void _vial_vector_reserve(void *vec, size_t isize, size_t capacity
 	}
 }
 
-#define vial_vector_reserve(self, capacity) _vial_vector_reserve((void *) &(self), sizeof((self).values[0]), (capacity))
+#define vial_vector_reserve(self, capacity) _vial_vector_reserve((vial_vector_of_void *) &(self), sizeof((self).values[0]), (capacity))
 
-static inline void _vial_vector_shrink(void *vec, size_t isize)
+static inline void _vial_vector_shrink(vial_vector_of_void *self, size_t isize)
 {
-	vial_vector_of_void *self = vec;
 	if (self->capacity > self->size) {
 		self->capacity = self->size;
 		self->values = realloc(self->values, self->capacity * isize);
 	}
 }
 
-#define vial_vector_shrink(self) _vial_vector_shrink((void *) &(self), sizeof((self).values[0]))
+#define vial_vector_shrink(self) _vial_vector_shrink((vial_vector_of_void *) &(self), sizeof((self).values[0]))
 
 #define vial_vector_add(self, item) do { \
 	vial_vector_reserve((self), (self).size + 1); \
