@@ -17,67 +17,30 @@ int vial_cstr_starts(const char *s, const char *b);
 
 char *vial_cstr_reverse(char *s);
 
-#define VIAL_STRING_STATIC_SIZE 16
+typedef const char *vial_string;
 
-struct vial_string {
-	size_t length;
-	union {
-		char static_buf[VIAL_STRING_STATIC_SIZE];
-		struct {
-			size_t alloc;
-			char *buf;
-		} dynamic;
-	} str;
-};
+vial_string vial_string_new(const char *s);
 
-void vial_string_init(struct vial_string *self, const char *s);
-
-void vial_string_init_copy(struct vial_string *self, const struct vial_string *s);
-
-static inline const char *vial_string_cstr(const struct vial_string *self)
+static inline size_t vial_string_length(vial_string self)
 {
-	return self->length < VIAL_STRING_STATIC_SIZE ? self->str.static_buf : self->str.dynamic.buf;
+	const size_t *len = (const size_t *) self;
+	return *(len - 1);
 }
 
-static inline char *vial_string_cstr_mut(struct vial_string *self)
-{
-	return self->length < VIAL_STRING_STATIC_SIZE ? self->str.static_buf : self->str.dynamic.buf;
-}
+void vial_string_take(vial_string self);
 
-static inline char vial_string_at(const struct vial_string *self, size_t index)
-{
-	return vial_string_cstr(self)[index];
-}
+void vial_string_leave(vial_string self);
 
-static inline char vial_string_get(const struct vial_string *self, size_t index)
-{
-	return index < self->length ? vial_string_cstr(self)[index] : '\0';
-}
+vial_string vial_string_from_char(int value);
+vial_string vial_string_from_char_array(const char *start, size_t length);
+vial_string vial_string_from_double(double value);
+vial_string vial_string_from_float(float value);
+vial_string vial_string_from_int(int value);
+vial_string vial_string_from_long(long value);
+vial_string vial_string_from_uint(unsigned int value);
+vial_string vial_string_from_ulong(unsigned long value);
+vial_string vial_string_from_size(size_t value);
 
-static inline void vial_string_set(struct vial_string *self, size_t index, char c)
-{
-	if (index < self->length)
-		vial_string_cstr_mut(self)[index] = c;
-}
-
-void vial_string_clear(struct vial_string *self);
-
-char vial_string_pop(struct vial_string *self);
-
-void vial_string_push(struct vial_string *self, char c);
-
-void vial_string_append(struct vial_string *self, const struct vial_string *s);
-
-void vial_string_append_cstr(struct vial_string *self, const char *s);
-
-void vial_string_append_arr(struct vial_string *self, const char *s, size_t len);
-
-void vial_string_insert(struct vial_string *self, size_t index, const struct vial_string *s);
-
-void vial_string_insert_cstr(struct vial_string *self, size_t index, const char *s);
-
-void vial_string_insert_arr(struct vial_string *self, size_t index, const char *s, size_t len);
-
-void vial_string_erase(struct vial_string *self, size_t index, size_t count);
+vial_string vial_string_concat(const char *a, const char *b);
 
 #endif

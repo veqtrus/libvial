@@ -8,8 +8,11 @@ https://www.boost.org/LICENSE_1_0.txt
 
 #include <vial/string.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <vial/sharedptr.h>
 
 char *vial_strdup(const char *s)
 {
@@ -39,123 +42,134 @@ char *vial_cstr_reverse(char *s)
 	return s;
 }
 
-void vial_string_init(struct vial_string *self, const char *s)
+vial_string vial_string_new(const char *s)
 {
-	if (s == NULL) {
-		self->length = 0;
-		self->str.static_buf[0] = '\0';
-		return;
-	}
-	self->length = strlen(s);
-	if (self->length < VIAL_STRING_STATIC_SIZE) {
-		memcpy(self->str.static_buf, s, self->length + 1);
-	} else {
-		self->str.dynamic.alloc = self->length + 1;
-		self->str.dynamic.buf = malloc(self->str.dynamic.alloc);
-		memcpy(self->str.dynamic.buf, s, self->str.dynamic.alloc);
-	}
+	size_t len = 0;
+	size_t *plen;
+	char *buf;
+	if (s != NULL)
+		len = strlen(s);
+	plen = vial_sharedptr_malloc(len + sizeof(size_t) + 1);
+	*plen = len;
+	buf = (char *) (plen + 1);
+	if (s == NULL)
+		buf[0] = 0;
+	else
+		memcpy(buf, s, len + 1);
+	return buf;
 }
 
-void vial_string_init_copy(struct vial_string *self, const struct vial_string *s)
+void vial_string_take(vial_string self)
 {
-	self->length = 0;
-	self->str.static_buf[0] = '\0';
-	vial_string_append(self, s);
+	union {
+		vial_string str;
+		size_t *sz;
+	} ptr;
+	ptr.str = self;
+	vial_sharedptr_take(ptr.sz - 1);
 }
 
-void vial_string_clear(struct vial_string *self)
+void vial_string_leave(vial_string self)
 {
-	if (self->length >= VIAL_STRING_STATIC_SIZE)
-		free(self->str.dynamic.buf);
-	self->length = 0;
-	self->str.static_buf[0] = '\0';
+	union {
+		vial_string str;
+		size_t *sz;
+	} ptr;
+	ptr.str = self;
+	vial_sharedptr_leave(ptr.sz - 1);
 }
 
-static void set_length(struct vial_string *self, size_t new_length)
+vial_string vial_string_from_char(int value)
 {
-	size_t needed_capacity;
-	if (self->length < VIAL_STRING_STATIC_SIZE) {
-		if (new_length < VIAL_STRING_STATIC_SIZE)
-			goto finish;
-		needed_capacity = new_length < VIAL_STRING_STATIC_SIZE * 2
-			? VIAL_STRING_STATIC_SIZE * 2 : new_length + 1;
-		char *buffer = malloc(needed_capacity);
-		memcpy(buffer, self->str.static_buf, needed_capacity);
-		self->str.dynamic.alloc = needed_capacity;
-		self->str.dynamic.buf = buffer;
-	} else {
-		if (new_length < VIAL_STRING_STATIC_SIZE) {
-			char *buffer = self->str.dynamic.buf;
-			memcpy(self->str.static_buf, buffer, new_length + 1);
-			goto finish;
-		}
-		if (new_length < self->str.dynamic.alloc)
-			goto finish;
-		needed_capacity = self->str.dynamic.alloc * 2;
-		self->str.dynamic.alloc = needed_capacity;
-		self->str.dynamic.buf = realloc(self->str.dynamic.buf, needed_capacity);
-	}
-finish:
-	self->length = new_length;
+	size_t *plen;
+	char *buf;
+	plen = vial_sharedptr_malloc(sizeof(size_t) + 2);
+	*plen = 1;
+	buf = (char *) (plen + 1);
+	buf[0] = value;
+	buf[1] = 0;
+	return buf;
 }
 
-char vial_string_pop(struct vial_string *self)
+vial_string vial_string_from_char_array(const char *start, size_t length)
 {
-	const char res = vial_string_cstr(self)[self->length - 1];
-	set_length(self, self->length - 1);
-	vial_string_cstr_mut(self)[self->length] = '\0';
-	return res;
+	size_t *plen;
+	char *buf;
+	plen = vial_sharedptr_malloc(length + sizeof(size_t) + 1);
+	*plen = length;
+	buf = (char *) (plen + 1);
+	if (length != 0)
+		memcpy(buf, start, length);
+	buf[length] = 0;
+	return buf;
 }
 
-void vial_string_push(struct vial_string *self, char c)
+vial_string vial_string_from_double(double value)
 {
-	set_length(self, self->length + 1);
-	vial_string_cstr_mut(self)[self->length - 1] = c;
-	vial_string_cstr_mut(self)[self->length] = '\0';
+	char buf[32];
+	sprintf(buf, "%f", value);
+	return vial_string_new(buf);
 }
 
-void vial_string_append(struct vial_string *self, const struct vial_string *s)
+vial_string vial_string_from_float(float value)
 {
-	vial_string_append_arr(self, vial_string_cstr(s), s->length);
+	char buf[32];
+	sprintf(buf, "%f", value);
+	return vial_string_new(buf);
 }
 
-void vial_string_append_cstr(struct vial_string *self, const char *s)
+vial_string vial_string_from_int(int value)
 {
-	vial_string_append_arr(self, s, strlen(s));
+	char buf[32];
+	sprintf(buf, "%d", value);
+	return vial_string_new(buf);
 }
 
-void vial_string_append_arr(struct vial_string *self, const char *s, size_t len)
+vial_string vial_string_from_long(long value)
 {
-	set_length(self, self->length + len);
-	memcpy(vial_string_cstr_mut(self) + (self->length - len), s, len + 1);
+	char buf[32];
+	sprintf(buf, "%ld", value);
+	return vial_string_new(buf);
 }
 
-void vial_string_insert(struct vial_string *self, size_t index, const struct vial_string *s)
+vial_string vial_string_from_uint(unsigned int value)
 {
-	vial_string_insert_arr(self, index, vial_string_cstr(s), s->length);
+	char buf[32];
+	sprintf(buf, "%u", value);
+	return vial_string_new(buf);
 }
 
-void vial_string_insert_cstr(struct vial_string *self, size_t index, const char *s)
+vial_string vial_string_from_ulong(unsigned long value)
 {
-	vial_string_insert_arr(self, index, s, strlen(s));
+	char buf[32];
+	sprintf(buf, "%lu", value);
+	return vial_string_new(buf);
 }
 
-void vial_string_insert_arr(struct vial_string *self, size_t index, const char *s, size_t len)
+vial_string vial_string_from_size(size_t value)
 {
-	if (index > self->length)
-		return;
-	const size_t old_length = self->length;
-	set_length(self, self->length + len);
-	memmove(vial_string_cstr_mut(self) + index + len, vial_string_cstr(self) + index, old_length - index);
-	memcpy(vial_string_cstr_mut(self) + index, s, len);
-	vial_string_cstr_mut(self)[self->length] = '\0';
+	char buf[32];
+	sprintf(buf, "%zu", value);
+	return vial_string_new(buf);
 }
 
-void vial_string_erase(struct vial_string *self, size_t index, size_t count)
+vial_string vial_string_concat(const char *a, const char *b)
 {
-	if (index + count > self->length)
-		return;
-	memmove(vial_string_cstr_mut(self) + index, vial_string_cstr(self) + index + count, self->length - index - count);
-	set_length(self, self->length - count);
-	vial_string_cstr_mut(self)[self->length] = '\0';
+	size_t len, len_a = 0, len_b = 0;
+	size_t *plen;
+	char *buf;
+	if (a != NULL)
+		len_a = strlen(a);
+	if (b != NULL)
+		len_b = strlen(b);
+	len = len_a + len_b;
+	plen = vial_sharedptr_malloc(len + sizeof(size_t) + 1);
+	*plen = len;
+	buf = (char *) (plen + 1);
+	if (a != NULL)
+		memcpy(buf, a, len_a);
+	if (b != NULL)
+		memcpy(buf + len_a, b, len_b);
+	buf[len] = 0;
+	return buf;
 }

@@ -7,13 +7,14 @@ https://www.boost.org/LICENSE_1_0.txt
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <vial/encoding/json.h>
 
 static void test_encdec()
 {
-	struct vial_string encoded;
+	char *encoded;
 	struct vial_json json;
 	const char *tests[] = {
 		"{}", "[]", "\"hello\"", "{\"hello\":\"world\"}", "[\"hello\",\"world\"]", "[{},[3,4]]",
@@ -23,15 +24,15 @@ static void test_encdec()
 		json = vial_json_decode(*test);
 		encoded = vial_json_encode(json, "\t");
 		vial_json_leave(&json);
-		json = vial_json_decode(vial_string_cstr(&encoded));
-		vial_string_clear(&encoded);
+		json = vial_json_decode(encoded);
+		free(encoded);
 		encoded = vial_json_encode(json, NULL);
-		if (strcmp(vial_string_cstr(&encoded), *test)) {
-			printf("json test failed: %s -> %s\n", *test, vial_string_cstr(&encoded));
+		if (strcmp(encoded, *test)) {
+			printf("json test failed: %s -> %s\n", *test, encoded);
 		} else {
 			printf("json test passed: %s\n", *test);
 		}
-		vial_string_clear(&encoded);
+		free(encoded);
 	}
 }
 

@@ -11,6 +11,7 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <stdbool.h>
 
 #include <vial/encoding/json.h>
+#include <vial/text/stringbuilder.h>
 
 static void dispose_array(struct vial_json_array *array)
 {
@@ -118,62 +119,65 @@ static struct vial_json parse_number(const char **p_str)
 	return vial_json_create_num(value);
 }
 
-static bool parse_string(const char **p_str, struct vial_string *str_out)
+static char *parse_string(const char **p_str)
 {
 	const char *c = *p_str;
-	vial_string_init(str_out, NULL);
+	struct vial_stringbuilder sbuilder;
+	vial_stringbuilder_init(&sbuilder);
 	skip_whitespace(&c);
-	if (*c != '\"')
-		return false;
+	if (*c != '\"') {
+		vial_stringbuilder_dispose(&sbuilder);
+		return NULL;
+	}
 	for (c++; *c != '\"'; c++) {
 		if (*c == '\\') {
 			switch (c[1]) {
 			case '\"':
-				vial_string_push(str_out, '\"');
+				vial_stringbuilder_append_char(&sbuilder, '\"');
 				break;
 			case '\'':
-				vial_string_push(str_out, '\'');
+				vial_stringbuilder_append_char(&sbuilder, '\'');
 				break;
 			case '\\':
-				vial_string_push(str_out, '\\');
+				vial_stringbuilder_append_char(&sbuilder, '\\');
 				break;
 			case 'b':
-				vial_string_push(str_out, '\b');
+				vial_stringbuilder_append_char(&sbuilder, '\b');
 				break;
 			case 'f':
-				vial_string_push(str_out, '\f');
+				vial_stringbuilder_append_char(&sbuilder, '\f');
 				break;
 			case 'n':
-				vial_string_push(str_out, '\n');
+				vial_stringbuilder_append_char(&sbuilder, '\n');
 				break;
 			case 'r':
-				vial_string_push(str_out, '\r');
+				vial_stringbuilder_append_char(&sbuilder, '\r');
 				break;
 			case 't':
-				vial_string_push(str_out, '\t');
+				vial_stringbuilder_append_char(&sbuilder, '\t');
 				break;
 			default:
-				vial_string_clear(str_out);
-				return false;
+				vial_stringbuilder_dispose(&sbuilder);
+				return NULL;
 			}
 			c++;
 		} else if (*c >= 0 && *c < 32) {
-			vial_string_clear(str_out);
-			return false;
+			vial_stringbuilder_dispose(&sbuilder);
+			return NULL;
 		} else {
-			vial_string_push(str_out, *c);
+			vial_stringbuilder_append_char(&sbuilder, *c);
 		}
 	}
 	c++;
 	skip_whitespace(&c);
 	*p_str = c;
-	return true;
+	return vial_stringbuilder_extract_cstr(&sbuilder);
 }
 
 static struct vial_json parse_value(const char **p_str, int level)
 {
 	struct vial_json value, tmp_value;
-	struct vial_string tmp_str;
+	char *tmp_str;
 	const char *c = *p_str;
 	value.type = VIAL_JSON_INVALID;
 	if (level > 1000)
@@ -195,9 +199,10 @@ static struct vial_json parse_value(const char **p_str, int level)
 		}
 		break;
 	case '\"':
-		if (parse_string(&c, &tmp_str)) {
-			value = vial_json_create_str(vial_string_cstr(&tmp_str));
-			vial_string_clear(&tmp_str);
+		tmp_str = parse_string(&c);
+		if (tmp_str != NULL) {
+			value = vial_json_create_str(tmp_str);
+			free(tmp_str);
 		}
 		break;
 	case '[':
@@ -228,16 +233,17 @@ static struct vial_json parse_value(const char **p_str, int level)
 			break;
 		}
 		while (*c != '}') {
-			if (!parse_string(&c, &tmp_str))
+			tmp_str = parse_string(&c);
+			if (tmp_str == NULL)
 				goto parse_error;
 			if (*c != ':') {
-				vial_string_clear(&tmp_str);
+				free(tmp_str);
 				goto parse_error;
 			}
 			c++;
 			tmp_value = parse_value(&c, level + 1);
-			vial_json_put_move(value, vial_string_cstr(&tmp_str), tmp_value);
-			vial_string_clear(&tmp_str);
+			vial_json_put_move(value, tmp_str, tmp_value);
+			free(tmp_str);
 			if (tmp_value.type == VIAL_JSON_INVALID)
 				goto parse_error;
 			if (*c == ',')
@@ -266,130 +272,130 @@ struct vial_json vial_json_decode(const char *str)
 	return parse_value(&str, 0);
 }
 
-static void append_number(struct vial_string *result, double value)
+static void append_number(struct vial_stringbuilder *sbuilder, double value)
 {
 	char buf[64];
 	buf[0] = 0;
 	snprintf(buf, sizeof(buf), "%g", value);
-	vial_string_append_cstr(result, buf);
+	vial_stringbuilder_append_cstr(sbuilder, buf);
 }
 
-static void append_string(struct vial_string *result, const char *value)
+static void append_string(struct vial_stringbuilder *sbuilder, const char *value)
 {
-	vial_string_push(result, '\"');
+	vial_stringbuilder_append_char(sbuilder, '\"');
 	for (; *value; value++) {
 		switch (*value) {
 		case '\"':
-			vial_string_append_cstr(result, "\\\"");
+			vial_stringbuilder_append_cstr(sbuilder, "\\\"");
 			break;
 		case '\\':
-			vial_string_append_cstr(result, "\\\\");
+			vial_stringbuilder_append_cstr(sbuilder, "\\\\");
 			break;
 		case '\b':
-			vial_string_append_cstr(result, "\\b");
+			vial_stringbuilder_append_cstr(sbuilder, "\\b");
 			break;
 		case '\f':
-			vial_string_append_cstr(result, "\\f");
+			vial_stringbuilder_append_cstr(sbuilder, "\\f");
 			break;
 		case '\n':
-			vial_string_append_cstr(result, "\\n");
+			vial_stringbuilder_append_cstr(sbuilder, "\\n");
 			break;
 		case '\r':
-			vial_string_append_cstr(result, "\\r");
+			vial_stringbuilder_append_cstr(sbuilder, "\\r");
 			break;
 		case '\t':
-			vial_string_append_cstr(result, "\\t");
+			vial_stringbuilder_append_cstr(sbuilder, "\\t");
 			break;
 		default:
-			vial_string_push(result, *value);
+			vial_stringbuilder_append_char(sbuilder, *value);
 			break;
 		}
 	}
-	vial_string_push(result, '\"');
+	vial_stringbuilder_append_char(sbuilder, '\"');
 }
 
-static void append_indent(struct vial_string *result, const char *indent, int level)
+static void append_indent(struct vial_stringbuilder *sbuilder, const char *indent, int level)
 {
 	if (indent == NULL)
 		return;
-	vial_string_push(result, '\n');
+	vial_stringbuilder_append_char(sbuilder, '\n');
 	while (level --> 0)
-		vial_string_append_cstr(result, indent);
+		vial_stringbuilder_append_cstr(sbuilder, indent);
 }
 
 struct object_iter_ctx {
 	size_t i;
-	struct vial_string *result;
+	struct vial_stringbuilder *sbuilder;
 	const char *indent;
 	int level;
 };
 
-static void append_value(struct vial_string *result, struct vial_json *value, const char *indent, int level);
+static void append_value(struct vial_stringbuilder *sbuilder, struct vial_json *value, const char *indent, int level);
 
 static void append_object_iterator(const char **p_key, struct vial_json *value, struct object_iter_ctx *ctx)
 {
 	if (ctx->i != 0)
-		vial_string_push(ctx->result, ',');
-	append_indent(ctx->result, ctx->indent, ctx->level);
-	append_string(ctx->result, *p_key);
-	vial_string_push(ctx->result, ':');
+		vial_stringbuilder_append_char(ctx->sbuilder, ',');
+	append_indent(ctx->sbuilder, ctx->indent, ctx->level);
+	append_string(ctx->sbuilder, *p_key);
+	vial_stringbuilder_append_char(ctx->sbuilder, ':');
 	if (ctx->indent != NULL)
-		vial_string_push(ctx->result, ' ');
-	append_value(ctx->result, value, ctx->indent, ctx->level);
+		vial_stringbuilder_append_char(ctx->sbuilder, ' ');
+	append_value(ctx->sbuilder, value, ctx->indent, ctx->level);
 	ctx->i++;
 }
 
-static void append_value(struct vial_string *result, struct vial_json *value, const char *indent, int level)
+static void append_value(struct vial_stringbuilder *sbuilder, struct vial_json *value, const char *indent, int level)
 {
 	size_t i, len;
 	struct object_iter_ctx obj_iter_ctx;
 	switch (value->type) {
 	case VIAL_JSON_NULL:
-		vial_string_append_cstr(result, "null");
+		vial_stringbuilder_append_cstr(sbuilder, "null");
 		break;
 	case VIAL_JSON_FALSE:
-		vial_string_append_cstr(result, "false");
+		vial_stringbuilder_append_cstr(sbuilder, "false");
 		break;
 	case VIAL_JSON_TRUE:
-		vial_string_append_cstr(result, "true");
+		vial_stringbuilder_append_cstr(sbuilder, "true");
 		break;
 	case VIAL_JSON_NUMBER:
-		append_number(result, value->value.as_number);
+		append_number(sbuilder, value->value.as_number);
 		break;
 	case VIAL_JSON_STRING:
-		append_string(result, value->value.as_string);
+		append_string(sbuilder, value->value.as_string);
 		break;
 	case VIAL_JSON_ARRAY:
-		vial_string_push(result, '[');
+		vial_stringbuilder_append_char(sbuilder, '[');
 		len = value->value.as_array->vec.size;
 		for (i = 0; i < len; i++) {
 			if (i != 0)
-				vial_string_push(result, ',');
-			append_indent(result, indent, level + 1);
-			append_value(result, &vial_vector_at(value->value.as_array->vec, i), indent, level + 1);
+				vial_stringbuilder_append_char(sbuilder, ',');
+			append_indent(sbuilder, indent, level + 1);
+			append_value(sbuilder, &vial_vector_at(value->value.as_array->vec, i), indent, level + 1);
 		}
-		append_indent(result, indent, level);
-		vial_string_push(result, ']');
+		append_indent(sbuilder, indent, level);
+		vial_stringbuilder_append_char(sbuilder, ']');
 		break;
 	case VIAL_JSON_OBJECT:
-		vial_string_push(result, '{');
+		vial_stringbuilder_append_char(sbuilder, '{');
 		obj_iter_ctx.i = 0;
-		obj_iter_ctx.result = result;
+		obj_iter_ctx.sbuilder = sbuilder;
 		obj_iter_ctx.indent = indent;
 		obj_iter_ctx.level = level + 1;
 		vial_map_foreach(value->value.as_object->map, (vial_biconsumer_f) append_object_iterator, &obj_iter_ctx);
-		append_indent(result, indent, level);
-		vial_string_push(result, '}');
+		append_indent(sbuilder, indent, level);
+		vial_stringbuilder_append_char(sbuilder, '}');
 		break;
 	default:
 		break;
 	}
 }
 
-struct vial_string vial_json_encode(struct vial_json self, const char *indent)
+char *vial_json_encode(struct vial_json self, const char *indent)
 {
-	struct vial_string result;
-	vial_string_init(&result, NULL);
-	append_value(&result, &self, indent, 0);
-	return result;
+	struct vial_stringbuilder sbuilder;
+	vial_stringbuilder_init(&sbuilder);
+	append_value(&sbuilder, &self, indent, 0);
+	return vial_stringbuilder_extract_cstr(&sbuilder);
 }

@@ -14,7 +14,6 @@ https://www.boost.org/LICENSE_1_0.txt
 #include <vial/collections/vector.h>
 #include <vial/collections/map.h>
 #include <vial/sharedptr.h>
-#include <vial/string.h>
 
 enum vial_json_type {
 	VIAL_JSON_INVALID = 0,
@@ -184,6 +183,6 @@ static inline size_t vial_json_length(const struct vial_json self)
 
 struct vial_json vial_json_decode(const char *str);
 
-struct vial_string vial_json_encode(struct vial_json self, const char *indent);
+char *vial_json_encode(struct vial_json self, const char *indent);
 
 #endif
