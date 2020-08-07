@@ -51,6 +51,9 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Dependency list
+dependencies.mk
+
 # IDEs
 *.kdev4
 .kdev4/

@@ -47,9 +47,14 @@ uninstall:
 clean:
 	rm -f $(strip $(call rwildcard,src/,*.o))
 
+dependencies.mk: $(SOURCES) $(strip $(call rwildcard,include/vial/,*.h))
+	python3 generate_make_dependencies.py $(SOURCES) > dependencies.mk
+
 libvial.a: $(OBJECTS) $(ASM_OBJECTS)
 	@echo Archiving...
 	ar rcs $@ $^
+
+include dependencies.mk
 
 src/asm/%.o: src/asm/%.s
 	$(AS) -o $@ -c $<
@@ -62,4 +67,4 @@ test: $(TEST_OBJECTS)
 
 test/%: test/%.c libvial.a
 	@echo Compiling $<
-	@$(CC) $< -o $@ $(CFLAGS) -lm -L. -lvial
+	@$(CC) $< -o $@ $(CFLAGS) -L. -lvial -lm
