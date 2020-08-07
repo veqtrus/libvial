@@ -50,17 +50,12 @@ struct vial_json vial_json_create_array(void)
 	return result;
 }
 
-static int key_comp(const char **l, const char **r)
-{
-	return strcmp(*l, *r);
-}
-
 struct vial_json vial_json_create_object(void)
 {
 	struct vial_json result;
 	result.type = VIAL_JSON_OBJECT;
 	result.value.as_object = vial_sharedptr_make(sizeof(*result.value.as_object), (vial_dispose_f) dispose_object);
-	vial_map_init(result.value.as_object->map, (vial_comp_f) key_comp);
+	vial_map_init(result.value.as_object->map, vial_comp_cstr);
 	result.value.as_object->map.dispose_key = (vial_dispose_f) dispose_key;
 	result.value.as_object->map.dispose_value = (vial_dispose_f) vial_json_leave;
 	return result;

@@ -34,6 +34,7 @@ struct vial_map_node {
 }
 
 typedef vial_map(void *, void *) vial_map_of_voidp_voidp;
+typedef vial_map(const char *, const char *) vial_map_of_cstr_cstr;
 
 #define vial_map_init(self, cmp) do { \
 	(self).size = 0; \

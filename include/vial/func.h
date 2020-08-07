@@ -19,4 +19,6 @@ typedef void (*vial_biconsumer_f)(const void *a, const void *b, void *ctx);
 
 void vial_dispose_nop(void *p);
 
+int vial_comp_cstr(const void *l, const void *r);
+
 #endif
